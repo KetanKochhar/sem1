@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Reduced Row Echelon Form Calculator</title>
+    <link rel="stylesheet" href="../style.css"> <style>
+        /* Specific styles for the calculator that might override or extend style.css */
+        /* You can keep or remove the table styles if they are covered by style.css */
+        table {
+            border-collapse: collapse;
+            width: 100%; /* Ensure tables within steps are responsive */
+            margin-top: 15px; /* Add some space above tables */
+        }
+
+        th,
+        td {
+            border: 1px solid #ddd; /* Lighter border for a softer look */
+            padding: 8px;
+            text-align: center;
+        }
+
+        th {
+            background-color: #f2f2f2; /* Light background for table headers */
+        }
+
+        #matrix-container input {
+            width: 70px; /* Adjust input width for better mobile view if needed */
+            margin: 5px; /* Small margin for spacing */
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        #matrix-form label {
+            display: inline-block;
+            width: 150px;
+            margin-bottom: 10px;
+        }
+
+        #matrix-form input[type="number"] {
+            padding: 8px;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        #create-matrix-btn, #calculate-btn {
+            background-color: #007bff;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-right: 10px;
+            margin-top: 10px; /* Add some margin */
+        }
+
+        #create-matrix-btn:hover, #calculate-btn:hover {
+            background-color: #0056b3;
+        }
+
+        #steps-container {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #e9f5ff; /* Light blue background for steps */
+            border-radius: 8px;
+            border: 1px solid #cce5ff;
+        }
+
+        #steps-container p {
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #004085;
+        }
+
+        @media screen and (max-width: 600px) {
+            #matrix-container input {
+                width: 45px; /* Further reduce input width on very small screens */
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="navbar">
+        <span class="logo">Matrix RREF Calculator</span>
+        <div>
+            <a href="index.html">Home</a>
+            </div>
+    </div>
+
+    <div class="container">
+        <h1>Reduced Row Echelon Form Calculator for Matrix</h1>
+        <form id="matrix-form">
+            <label for="rows">Number of rows:</label>
+            <input type="number" id="rows" required value="3">
+            <br>
+            <label for="cols">Number of columns:</label>
+            <input type="number" id="cols" required value="4">
+            <br>
+            <button id="create-matrix-btn">Create Matrix</button>
+        </form>
+        <div id="matrix-container"></div>
+        <button id="calculate-btn" style="display: none;">Calculate Row Echelon Form</button>
+        <div id="steps-container"></div>
+    </div>
+
+    <script>
+        // Function to calculate row echelon form
+        function rowEchelonForm(matrix) {
+            const num_rows = matrix.length;
+            const num_cols = matrix[0].length;
+            let current_row = 0;
+            let step = 1;
+
+            document.getElementById('steps-container').innerHTML = ''; // Clear previous steps
+
+            for (let j = 0; j < num_cols; j++) {
+                if (current_row >= num_rows) {
+                    break;
+                }
+
+                let pivot_row = current_row;
+                while (pivot_row < num_rows && matrix[pivot_row][j] === 0) {
+                    pivot_row++;
+                }
+
+                if (pivot_row === num_rows) {
+                    continue;
+                }
+
+                // Swap rows
+                if (pivot_row !== current_row) {
+                    [matrix[current_row], matrix[pivot_row]] = [matrix[pivot_row], matrix[current_row]];
+                    printStep(`Step ${step}: Swap rows ${current_row + 1} and ${pivot_row + 1}`, matrix);
+                    step++;
+                }
+
+                // Make pivot element equal to 1
+                const pivot = matrix[current_row][j];
+                if (pivot !== 1) {
+                    matrix[current_row] = matrix[current_row].map(element => element / pivot);
+                    printStep(`Step ${step}: Divide row ${current_row + 1} by ${formatNumber(pivot)}`, matrix);
+                    step++;
+                }
+
+                // Eliminate pivot variable from other rows
+                for (let i = 0; i < num_rows; i++) {
+                    if (i !== current_row) {
+                        const factor = matrix[i][j];
+                        if (factor !== 0) {
+                            matrix[i] = matrix[i].map((element, k) => element - factor * matrix[current_row][k]);
+                            printStep(`Step ${step}: Subtract ${formatNumber(factor)} times row ${current_row + 1} from row ${i + 1}`, matrix);
+                            step++;
+                        }
+                    }
+                }
+
+                current_row++;
+            }
+            printStep("Final Reduced Row Echelon Form:", matrix); // Print final RREF
+            return matrix;
+        }
+
+        // Helper function to format numbers for display (e.g., toFixed(2))
+        function formatNumber(value) {
+            // Check if value is an integer or has very few decimal places
+            if (value % 1 === 0) {
+                return value.toString();
+            }
+            // For floating point numbers, format to 2 decimal places
+            return value.toFixed(2);
+        }
+
+        // Function to print step
+        function printStep(description, matrix) {
+            const stepsContainer = document.getElementById('steps-container');
+            const stepElement = document.createElement('div');
+            stepElement.innerHTML = `
+                <p>${description}</p>
+                <table>
+                ${matrix.map(row => `
+                    <tr>
+                    ${row.map(element => `<td>${formatNumber(element)}</td>`).join('')}
+                    </tr>
+                `).join('')}
+                </table>
+            `;
+            stepsContainer.appendChild(stepElement);
+        }
+
+        // Function to create matrix input fields
+        function createMatrix(rows, cols) {
+            const matrixContainer = document.getElementById('matrix-container');
+            matrixContainer.innerHTML = '';
+            document.getElementById('steps-container').innerHTML = ''; // Clear previous steps
+
+            const matrixInputs = []; // Store references to input elements
+            for (let i = 0; i < rows; i++) {
+                const row = [];
+                const rowElement = document.createElement('div');
+                rowElement.style.display = 'flex'; /* Use flexbox for row alignment */
+                rowElement.style.justifyContent = 'center'; /* Center inputs */
+
+                for (let j = 0; j < cols; j++) {
+                    const inputElement = document.createElement('input');
+                    inputElement.type = 'number';
+                    inputElement.required = true;
+                    inputElement.value = "0"; // Default value to 0 for convenience
+                    rowElement.appendChild(inputElement);
+                    row.push(inputElement);
+                }
+                matrixContainer.appendChild(rowElement);
+                matrixInputs.push(row);
+            }
+
+            const calculateBtn = document.getElementById('calculate-btn');
+            calculateBtn.style.display = 'block';
+
+            // Remove previous event listener to prevent multiple bindings
+            const oldCalculateBtn = calculateBtn.cloneNode(true);
+            calculateBtn.parentNode.replaceChild(oldCalculateBtn, calculateBtn);
+            const newCalculateBtn = document.getElementById('calculate-btn');
+
+            newCalculateBtn.addEventListener('click', () => {
+                document.getElementById('steps-container').innerHTML = ''; // Clear steps before new calculation
+                const matrixValues = matrixInputs.map(row => row.map(input => parseFloat(input.value)));
+                rowEchelonForm(matrixValues); // Call the function to calculate and display
+            });
+        }
+
+        document.getElementById('create-matrix-btn').addEventListener('click', (e) => {
+            e.preventDefault();
+            const rows = parseInt(document.getElementById('rows').value);
+            const cols = parseInt(document.getElementById('cols').value);
+            if (rows > 0 && cols > 0) {
+                createMatrix(rows, cols);
+            } else {
+                alert("Please enter valid positive numbers for rows and columns.");
+            }
+        });
+
+        // Initialize with a default matrix on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            const defaultRows = 3;
+            const defaultCols = 4;
+            document.getElementById('rows').value = defaultRows;
+            document.getElementById('cols').value = defaultCols;
+            createMatrix(defaultRows, defaultCols);
+        });
+    </script>
+</body>
+</html>
