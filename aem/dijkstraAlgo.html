@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dijkstra's Algorithm Visualization</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background-color: #f0f0f0;
+            margin: 0;
+            /* padding: 20px; */
+        }
+        canvas {
+            border: 1px solid #000;
+            background-color: #fff;
+        }
+        #controls {
+            margin-top: 10px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        button {
+            padding: 10px 20px;
+            cursor: pointer;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        #status {
+            margin-top: 10px;
+            font-size: 16px;
+            color: #333;
+        }
+        #edgeForm {
+            margin-top: 10px;
+            display: none;
+            flex-direction: column;
+            gap: 5px;
+        }
+        input[type="number"] {
+            padding: 5px;
+            width: 100px;
+        }
+        .navbar {
+    background-color: #333;
+    overflow: hidden;
+    padding: 10px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    margin: 0;
+}
+
+.navbar a {
+    float: left;
+    display: block;
+    color: white;
+    text-align: center;
+    padding: 14px 20px;
+    text-decoration: none;
+}
+
+.navbar a:hover {
+    background-color: #ddd;
+    color: black;
+}
+
+.navbar .logo {
+    font-size: 24px;
+    font-weight: bold;
+}
+
+    </style>
+</head>
+<body>
+    <div class="navbar">
+        <span class="logo">Dijkstra's Algorithm</span>
+        <div>
+            <a href="/">Home</a>
+            </div>
+    </div>
+    <h1>Dijkstra's Algorithm Visualization</h1>
+    <canvas id="graphCanvas" width="600" height="400"></canvas>
+    <div id="controls">
+        <button onclick="startAddingNodes()">Add Nodes</button>
+        <button onclick="startAddingEdges()">Add Edges</button>
+        <button onclick="selectStartNode()">Select Start Node</button>
+        <button onclick="selectEndNode()">Select End Node</button>
+        <button onclick="runDijkstra()">Run Dijkstra</button>
+        <button onclick="resetGraph()">Reset</button>
+    </div>
+    <div id="edgeForm">
+        <label>Select First Node: <span id="firstNode"></span></label>
+        <label>Select Second Node: <span id="secondNode"></span></label>
+        <label>Weight: <input type="number" id="edgeWeight" min="1" value="1"></label>
+        <button onclick="addEdge()">Add Edge</button>
+        <button onclick="cancelEdge()">Cancel</button>
+    </div>
+    <div id="status">Click "Add Nodes" and click on the canvas to add nodes.</div>
+
+    <script>
+        const canvas = document.getElementById('graphCanvas');
+        const ctx = canvas.getContext('2d');
+        const status = document.getElementById('status');
+        const edgeForm = document.getElementById('edgeForm');
+        const firstNodeSpan = document.getElementById('firstNode');
+        const secondNodeSpan = document.getElementById('secondNode');
+        const edgeWeightInput = document.getElementById('edgeWeight');
+
+        let nodes = [];
+        let edges = [];
+        let startNode = null;
+        let endNode = null;
+        let isAddingNodes = false;
+        let isAddingEdges = false;
+        let isSelectingStart = false;
+        let isSelectingEnd = false;
+        let animationRunning = false;
+        let firstSelectedNode = null;
+
+        function drawGraph() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Draw edges
+            edges.forEach(edge => {
+                const fromNode = nodes[edge.from];
+                const toNode = nodes[edge.to];
+                ctx.beginPath();
+                ctx.moveTo(fromNode.x, fromNode.y);
+                ctx.lineTo(toNode.x, toNode.y);
+                ctx.strokeStyle = '#000';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+
+                // Draw weight
+                const midX = (fromNode.x + toNode.x) / 2;
+                const midY = (fromNode.y + toNode.y) / 2;
+                ctx.fillStyle = '#000';
+                ctx.font = '12px Arial';
+                ctx.fillText(edge.weight, midX, midY);
+            });
+
+            // Draw nodes
+            nodes.forEach(node => {
+                ctx.beginPath();
+                ctx.arc(node.x, node.y, 20, 0, 2 * Math.PI);
+                ctx.fillStyle = node.id === startNode ? '#ff0000' : (node.id === endNode ? '#ffa500' : '#007bff');
+                ctx.fill();
+                ctx.strokeStyle = '#000';
+                ctx.lineWidth = 1;
+                ctx.stroke();
+
+                // Draw node label
+                ctx.fillStyle = '#fff';
+                ctx.font = '16px Arial';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(node.id, node.x, node.y);
+            });
+        }
+
+        function startAddingNodes() {
+            if (animationRunning) return;
+            isAddingNodes = true;
+            isAddingEdges = false;
+            isSelectingStart = false;
+            isSelectingEnd = false;
+            edgeForm.style.display = 'none';
+            status.textContent = 'Click on the canvas to add nodes.';
+        }
+
+        function startAddingEdges() {
+            if (animationRunning || nodes.length < 2) {
+                status.textContent = nodes.length < 2 ? 'Add at least two nodes first.' : 'Cannot add edges during animation.';
+                return;
+            }
+            isAddingNodes = false;
+            isAddingEdges = true;
+            isSelectingStart = false;
+            isSelectingEnd = false;
+            firstSelectedNode = null;
+            firstNodeSpan.textContent = '';
+            secondNodeSpan.textContent = '';
+            edgeForm.style.display = 'flex';
+            status.textContent = 'Click two nodes to create an edge.';
+        }
+
+        function selectStartNode() {
+            if (animationRunning || nodes.length === 0) {
+                status.textContent = nodes.length === 0 ? 'Add nodes first.' : 'Cannot select start node during animation.';
+                return;
+            }
+            isAddingNodes = false;
+            isAddingEdges = false;
+            isSelectingStart = true;
+            isSelectingEnd = false;
+            edgeForm.style.display = 'none';
+            status.textContent = 'Click a node to select the start node.';
+        }
+
+        function selectEndNode() {
+            if (animationRunning || nodes.length === 0) {
+                status.textContent = nodes.length === 0 ? 'Add nodes first.' : 'Cannot select end node during animation.';
+                return;
+            }
+            isAddingNodes = false;
+            isAddingEdges = false;
+            isSelectingStart = false;
+            isSelectingEnd = true;
+            edgeForm.style.display = 'none';
+            status.textContent = 'Click a node to select the end node.';
+        }
+
+        canvas.addEventListener('click', async (event) => {
+            if (animationRunning) return;
+
+            const rect = canvas.getBoundingClientRect();
+            const x = event.clientX - rect.left;
+            const y = event.clientY - rect.top;
+
+            if (isAddingNodes) {
+                // Prevent nodes from being too close
+                const tooClose = nodes.some(node => Math.sqrt((x - node.x) ** 2 + (y - node.y) ** 2) < 40);
+                if (!tooClose) {
+                    nodes.push({ x, y, id: nodes.length });
+                    status.textContent = `Node ${nodes.length - 1} added.`;
+                    drawGraph();
+                } else {
+                    status.textContent = 'Nodes too close. Try a different spot.';
+                }
+            } else if (isAddingEdges) {
+                nodes.forEach(node => {
+                    const dist = Math.sqrt((x - node.x) ** 2 + (y - node.y) ** 2);
+                    if (dist < 20) {
+                        if (firstSelectedNode === null) {
+                            firstSelectedNode = node.id;
+                            firstNodeSpan.textContent = node.id;
+                            status.textContent = 'Select the second node.';
+                        } else if (firstSelectedNode !== node.id) {
+                            secondNodeSpan.textContent = node.id;
+                            status.textContent = 'Enter weight and click Add Edge.';
+                        }
+                    }
+                });
+            } else if (isSelectingStart) {
+                nodes.forEach(node => {
+                    const dist = Math.sqrt((x - node.x) ** 2 + (y - node.y) ** 2);
+                    if (dist < 20) {
+                        startNode = node.id;
+                        isSelectingStart = false;
+                        status.textContent = `Start node selected: ${startNode}`;
+                        drawGraph();
+                    }
+                });
+            } else if (isSelectingEnd) {
+                nodes.forEach(node => {
+                    const dist = Math.sqrt((x - node.x) ** 2 + (y - node.y) ** 2);
+                    if (dist < 20 && node.id !== startNode) {
+                        endNode = node.id;
+                        isSelectingEnd = false;
+                        status.textContent = `End node selected: ${endNode}`;
+                        drawGraph();
+                    }
+                });
+            }
+        });
+
+        function addEdge() {
+            if (firstSelectedNode === null || secondNodeSpan.textContent === '') {
+                status.textContent = 'Select two nodes first.';
+                return;
+            }
+            const weight = parseInt(edgeWeightInput.value);
+            if (isNaN(weight) || weight <= 0) {
+                status.textContent = 'Enter a valid positive weight.';
+                return;
+            }
+            const secondNode = parseInt(secondNodeSpan.textContent);
+            // Prevent duplicate edges
+            const exists = edges.some(edge =>
+                (edge.from === firstSelectedNode && edge.to === secondNode) ||
+                (edge.from === secondNode && edge.to === firstSelectedNode)
+            );
+            if (!exists) {
+                edges.push({ from: firstSelectedNode, to: secondNode, weight });
+                status.textContent = `Edge added from ${firstSelectedNode} to ${secondNode} with weight ${weight}.`;
+                drawGraph();
+            } else {
+                status.textContent = 'Edge already exists.';
+            }
+            firstSelectedNode = null;
+            firstNodeSpan.textContent = '';
+            secondNodeSpan.textContent = '';
+            edgeForm.style.display = 'none';
+            isAddingEdges = false;
+        }
+
+        function cancelEdge() {
+            isAddingEdges = false;
+            firstSelectedNode = null;
+            firstNodeSpan.textContent = '';
+            secondNodeSpan.textContent = '';
+            edgeForm.style.display = 'none';
+            status.textContent = 'Edge addition cancelled.';
+        }
+
+        async function runDijkstra() {
+            if (startNode === null || endNode === null) {
+                status.textContent = 'Please select both start and end nodes first.';
+                return;
+            }
+            if (animationRunning) return;
+            if (nodes.length === 0 || edges.length === 0) {
+                status.textContent = 'Add nodes and edges first.';
+                return;
+            }
+
+            animationRunning = true;
+            status.textContent = 'Running Dijkstra\'s algorithm...';
+
+            const distances = new Array(nodes.length).fill(Infinity);
+            const previous = new Array(nodes.length).fill(null);
+            const visited = new Array(nodes.length).fill(false);
+            distances[startNode] = 0;
+
+            const pq = [[0, startNode]]; // Priority queue: [distance, node]
+
+            while (pq.length > 0) {
+                pq.sort((a, b) => a[0] - b[0]);
+                const [dist, u] = pq.shift();
+                if (visited[u]) continue;
+
+                visited[u] = true;
+
+                // Highlight current node
+                ctx.beginPath();
+                ctx.arc(nodes[u].x, nodes[u].y, 20, 0, 2 * Math.PI);
+                ctx.fillStyle = '#00ff00';
+                ctx.fill();
+                ctx.strokeStyle = '#000';
+                ctx.stroke();
+                ctx.fillStyle = '#fff';
+                ctx.font = '16px Arial';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(u, nodes[u].x, nodes[u].y);
+                await new Promise(resolve => setTimeout(resolve, 1000));
+
+                // Stop if end node is reached
+                if (u === endNode) break;
+
+                // Process neighbors
+                edges.forEach(edge => {
+                    if (edge.from === u) {
+                        const v = edge.to;
+                        if (!visited[v] && distances[u] + edge.weight < distances[v]) {
+                            distances[v] = distances[u] + edge.weight;
+                            previous[v] = u;
+                            pq.push([distances[v], v]);
+
+                            // Highlight edge being considered
+                            ctx.beginPath();
+                            ctx.moveTo(nodes[u].x, nodes[u].y);
+                            ctx.lineTo(nodes[v].x, nodes[v].y);
+                            ctx.strokeStyle = '#ff0000';
+                            ctx.lineWidth = 4;
+                            ctx.stroke();
+                            setTimeout(() => drawGraph(), 500); // Reset edge color
+                        }
+                    } else if (edge.to === u) {
+                        const v = edge.from;
+                        if (!visited[v] && distances[u] + edge.weight < distances[v]) {
+                            distances[v] = distances[u] + edge.weight;
+                            previous[v] = u;
+                            pq.push([distances[v], v]);
+
+                            // Highlight edge being considered
+                            ctx.beginPath();
+                            ctx.moveTo(nodes[u].x, nodes[u].y);
+                            ctx.lineTo(nodes[v].x, nodes[v].y);
+                            ctx.strokeStyle = '#ff0000';
+                            ctx.lineWidth = 4;
+                            ctx.stroke();
+                            setTimeout(() => drawGraph(), 500); // Reset edge color
+                        }
+                    }
+                });
+                await new Promise(resolve => setTimeout(resolve, 1000));
+            }
+
+            // Draw the shortest path from start to end node
+            if (distances[endNode] === Infinity) {
+                status.textContent = 'No path exists from start to end node.';
+            } else {
+                let current = endNode;
+                const path = [];
+                while (current !== null) {
+                    path.push(current);
+                    current = previous[current];
+                }
+                path.reverse();
+
+                for (let i = 1; i < path.length; i++) {
+                    const fromNode = nodes[path[i - 1]];
+                    const toNode = nodes[path[i]];
+                    ctx.beginPath();
+                    ctx.moveTo(fromNode.x, fromNode.y);
+                    ctx.lineTo(toNode.x, toNode.y);
+                    ctx.strokeStyle = '#00ff00';
+                    ctx.lineWidth = 4;
+                    ctx.stroke();
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                }
+                status.textContent = `Shortest path found! Distance: ${distances[endNode]}`;
+            }
+
+            animationRunning = false;
+        }
+
+        function resetGraph() {
+            nodes = [];
+            edges = [];
+            startNode = null;
+            endNode = null;
+            isAddingNodes = false;
+            isAddingEdges = false;
+            isSelectingStart = false;
+            isSelectingEnd = false;
+            animationRunning = false;
+            firstSelectedNode = null;
+            edgeForm.style.display = 'none';
+            firstNodeSpan.textContent = '';
+            secondNodeSpan.textContent = '';
+            status.textContent = 'Click "Add Nodes" and click on the canvas to add nodes.';
+            drawGraph();
+        }
+
+        drawGraph();
+    </script>
+</body>
+</html>
