@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DC Circuit Simulator</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.2/p5.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f0f0f0;
+        }
+        #controls {
+            margin-bottom: 20px;
+            padding: 10px;
+            background-color: #fff;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        #circuit-board {
+            border: 2px solid #333;
+            background-color: #fff;
+        }
+        select, button {
+            padding: 5px;
+            margin: 5px;
+            font-size: 16px;
+        }
+        #info {
+            margin-top: 10px;
+            padding: 10px;
+            background-color: #e0e0e0;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div id="controls">
+        <h2>DC Circuit Simulator</h2>
+        <div>
+            <label>Select Component to Draw:</label>
+            <select id="component-select">
+                <option value="">Select...</option>
+                <option value="battery">Battery (5V)</option>
+                <option value="resistor">Resistor (100Ω)</option>
+                <option value="wire">Wire</option>
+                <option value="led">LED</option>
+            </select>
+        </div>
+        <div>
+            <button onclick="addWire()">Add Wire</button>
+            <button onclick="toggleBattery()">Toggle Battery</button>
+            <button onclick="deleteSelected()">Delete Selected</button>
+            <button onclick="calculateCircuit()">Calculate Circuit</button>
+        </div>
+        <div id="info">
+            <h3>Selected Elements</h3>
+            <p id="selected-info">None selected</p>
+            <p id="circuit-results">Circuit Results: Not calculated</p>
+        </div>
+    </div>
+    <div id="circuit-board"></div>
+    <script>
+        let components = [];
+        let wires = [];
+        let selectedComponent = null;
+        let isDragging = false;
+        let isWiring = false;
+        let wireStart = null;
+        let batteryOn = false;
+
+        function setup() {
+            let canvas = createCanvas(800, 600);
+            canvas.parent('circuit-board');
+            background(255);
+        }
+
+        function draw() {
+            background(255);
+            // Draw wires
+            stroke(0);
+            strokeWeight(2);
+            for (let wire of wires) {
+                line(wire.start.x, wire.start.y, wire.end.x, wire.end.y);
+            }
+            // Draw components
+            for (let comp of components) {
+                comp.display();
+                if (comp.selected) {
+                    stroke(0, 0, 255);
+                    noFill();
+                    rect(comp.x - 25, comp.y - 25, 50, 50);
+                }
+            }
+        }
+
+        function mousePressed() {
+            let clickedComponent = null;
+            for (let comp of components) {
+                if (dist(mouseX, mouseY, comp.x, comp.y) < 25) {
+                    clickedComponent = comp;
+                    comp.selected = true;
+                    selectedComponent = comp;
+                    isDragging = true;
+                } else {
+                    comp.selected = false;
+                }
+            }
+            updateInfo();
+            if (isWiring && wireStart == null) {
+                wireStart = clickedComponent;
+            } else if (isWiring && wireStart != null && clickedComponent != null) {
+                wires.push({ start: wireStart, end: clickedComponent });
+                wireStart = null;
+                isWiring = false;
+            }
+        }
+
+        function mouseDragged() {
+            if (isDragging && selectedComponent) {
+                selectedComponent.x = mouseX;
+                selectedComponent.y = mouseY;
+            }
+        }
+
+        function mouseReleased() {
+            isDragging = false;
+        }
+
+        function mouseClicked() {
+            let componentType = document.getElementById('component-select').value;
+            if (componentType && mouseX > 0 && mouseX < width && mouseY > 0 && mouseY < height) {
+                if (componentType !== 'wire') {
+                    components.push(new Component(componentType, mouseX, mouseY));
+                }
+            }
+        }
+
+        function keyPressed() {
+            if (keyCode === DELETE) {
+                deleteSelected();
+            }
+        }
+
+        class Component {
+            constructor(type, x, y) {
+                this.type = type;
+                this.x = x;
+                this.y = y;
+                this.selected = false;
+                this.value = (type === 'battery') ? 5 : (type === 'resistor') ? 100 : 0; // Battery: 5V, Resistor: 100Ω
+                this.active = (type === 'led') ? false : true;
+            }
+
+            display() {
+                push();
+                translate(this.x, this.y);
+                if (this.type === 'battery') {
+                    fill(batteryOn ? 0 : 200);
+                    rect(-20, -30, 40, 20);
+                    line(0, -30, 0, -40);
+                    line(0, -10, 0, 0);
+                    text('5V', -10, 10);
+                } else if (this.type === 'resistor') {
+                    fill(150);
+                    rect(-20, -10, 40, 20);
+                    text('100Ω', -15, 30);
+                } else if (this.type === 'led') {
+                    fill(this.active ? color(255, 0, 0) : 200);
+                    ellipse(0, 0, 20, 20);
+                }
+                pop();
+            }
+        }
+
+        function addWire() {
+            isWiring = true;
+            wireStart = null;
+        }
+
+        function toggleBattery() {
+            batteryOn = !batteryOn;
+            calculateCircuit();
+        }
+
+        function deleteSelected() {
+            components = components.filter(comp => !comp.selected);
+            wires = wires.filter(wire => !wire.start.selected && !wire.end.selected);
+            selectedComponent = null;
+            updateInfo();
+        }
+
+        function calculateCircuit() {
+            if (!batteryOn) {
+                document.getElementById('circuit-results').innerText = 'Circuit Results: Battery is off';
+                setLEDs(false);
+                return;
+            }
+            // Simplified circuit analysis: assumes a single series or parallel path
+            let totalResistance = 0;
+            let hasBattery = false;
+            let hasLED = false;
+            let isSeries = true; // Simplified assumption
+
+            // Check for battery and LED
+            for (let comp of components) {
+                if (comp.type === 'battery') hasBattery = true;
+                if (comp.type === 'led') hasLED = true;
+                if (comp.type === 'resistor') totalResistance += comp.value;
+            }
+
+            if (!hasBattery || !hasLED || wires.length === 0) {
+                document.getElementById('circuit-results').innerText = 'Circuit Results: Incomplete circuit';
+                setLEDs(false);
+                return;
+            }
+
+            // Calculate current (Ohm's Law: I = V/R)
+            let voltage = 5; // Battery voltage
+            let current = totalResistance > 0 ? voltage / totalResistance : 0;
+            let power = voltage * current;
+
+            document.getElementById('circuit-results').innerText = 
+                `Circuit Results: Total Resistance = ${totalResistance}Ω, Current = ${current.toFixed(2)}A, Power = ${power.toFixed(2)}W`;
+            setLEDs(true);
+        }
+
+        function setLEDs(state) {
+            for (let comp of components) {
+                if (comp.type === 'led') comp.active = state;
+            }
+        }
+
+        function updateInfo() {
+            let info = selectedComponent ? 
+                `Type: ${selectedComponent.type}, X: ${selectedComponent.x.toFixed(0)}, Y: ${selectedComponent.y.toFixed(0)}` : 
+                'None selected';
+            document.getElementById('selected-info').innerText = info;
+        }
+    </script>
+</body>
+</html>
