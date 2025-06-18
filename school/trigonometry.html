@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Interactive Trigonometry Visualizer</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap');
+  @import url('https://fonts.googleapis.com/icon?family=Material+Icons');
+
+  /* Reset and base */
+  * {
+    box-sizing: border-box;
+  }
+  body {
+    margin: 0;
+    font-family: 'Inter', sans-serif;
+    background: linear-gradient(135deg, #f0f4ff, #d8e0ff);
+    color: #333;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+  h1 {
+    font-weight: 700;
+    font-size: 2.8rem;
+    margin: 1rem 0 1.5rem 0;
+    color: #3b4cca;
+    text-align: center;
+  }
+
+  /* Container layout */
+  main {
+    flex: 1 1 auto;
+    display: grid;
+    grid-template-columns: 1fr 360px;
+    gap: 32px;
+    max-width: 1200px;
+    margin: 0 auto 32px auto;
+    padding: 0 16px;
+  }
+
+  /* Responsive adjustments */
+  @media (max-width: 900px) {
+    main {
+      grid-template-columns: 1fr;
+      max-width: 90vw;
+      margin-bottom: 40px;
+    }
+  }
+
+  /* Canvas wrapper */
+  #canvasWrapper {
+    border-radius: 16px;
+    box-shadow: 0 8px 24px rgb(59 76 202 / 0.15);
+    background: rgba(255 255 255 / 0.85);
+    backdrop-filter: blur(12px);
+    padding: 24px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  canvas {
+    border-radius: 12px;
+    max-width: 100%;
+    height: auto;
+    background: white;
+    box-shadow: 0 4px 12px rgb(59 76 202 / 0.1);
+  }
+
+  /* Controls styles */
+  #controls {
+    background: rgba(255 255 255 / 0.85);
+    backdrop-filter: blur(12px);
+    border-radius: 16px;
+    box-shadow: 0 8px 24px rgb(59 76 202 / 0.15);
+    padding: 24px 32px;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+  }
+  #controls h2 {
+    font-weight: 600;
+    font-size: 1.5rem;
+    margin-bottom: 12px;
+    color: #3b4cca;
+  }
+
+  /* Form groups */
+  .form-group {
+    display: flex;
+    flex-direction: column;
+  }
+  label {
+    font-weight: 600;
+    margin-bottom: 6px;
+    font-size: 0.95rem;
+  }
+  input[type="number"], input[type="range"] {
+    appearance: none;
+    width: 100%;
+    padding: 6px 8px;
+    font-size: 1rem;
+    border-radius: 8px;
+    border: 1.5px solid #a0a8ff;
+    background: #f7f9ff;
+    transition: border-color 0.3s ease;
+  }
+  input[type="number"]:focus,
+  input[type="range"]:focus {
+    outline: none;
+    border-color: #3b4cca;
+    box-shadow: 0 0 8px #3b4cca88;
+  }
+  input[type="range"] {
+    height: 8px;
+    cursor: pointer;
+    background: #b4b8ff;
+  }
+  input[type="range"]::-webkit-slider-thumb {
+    appearance: none;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: #3b4cca;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    border: none;
+    margin-top: -7px;
+  }
+  input[type="range"]::-webkit-slider-thumb:hover {
+    background: #6d75ff;
+  }
+
+  /* Info panel */
+  #info {
+    margin-top: 12px;
+    font-size: 0.92rem;
+    color: #2e3192;
+    background: #e9ebff;
+    padding: 16px 20px;
+    border-radius: 12px;
+    box-shadow: inset 0 2px 6px #b6bcff99;
+    line-height: 1.4;
+  }
+  #info strong {
+    color: #1f245b;
+  }
+
+  /* Small helper text */
+  .input-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .units {
+    min-width: 26px;
+    color: #666;
+    font-weight: 600;
+  }
+
+  /* Icon in labels or beside inputs */
+  .material-icons {
+    vertical-align: middle;
+    font-size: 18px;
+    color: #3b4cca;
+    margin-right: 4px;
+  }
+
+  /* Subtle button for reset */
+  button#resetBtn {
+    padding: 12px 0;
+    font-size: 1rem;
+    font-weight: 700;
+    background: #3b4cca;
+    color: white;
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    user-select: none;
+  }
+  button#resetBtn:hover {
+    background: #5b65ff;
+  }
+  button#resetBtn:focus {
+    outline: 3px solid #6d75ff88;
+  }
+
+  /* Section divider style inside info */
+  #info hr {
+    margin: 16px 0;
+    border: none;
+    border-top: 1px solid #b6bcff88;
+  }
+
+  /* Accessibility class for screen reader only */
+  .sr-only {
+    position: absolute !important;
+    width: 1px !important;
+    height: 1px !important;
+    padding: 0 !important;
+    margin: -1px !important;
+    overflow: hidden !important;
+    clip: rect(0,0,0,0) !important;
+    white-space: nowrap !important;
+    border: 0 !important;
+  }
+
+</style>
+</head>
+<body>
+  <h1>Interactive Trigonometry Visualizer</h1>
+  <main>
+    <section id="canvasWrapper" aria-label="Triangle visualization area">
+      <canvas id="triangleCanvas" width="600" height="600" role="img" aria-describedby="canvasDesc"></canvas>
+      <p id="canvasDesc" class="sr-only">Canvas showing the interactive triangle based on inputs</p>
+    </section>
+
+    <section id="controls" aria-label="Triangle controls and trigonometry information">
+      <h2>Triangle Controls</h2>
+
+      <div class="form-group">
+        <label for="sideA"><span class="material-icons" aria-hidden="true">straighten</span>Side a (adjacent)</label>
+        <input type="number" id="sideA" min="1" max="400" step="1" value="150" aria-describedby="sideADesc" />
+        <input type="range" id="sideASlider" min="1" max="400" step="1" value="150" aria-hidden="true" />
+        <small id="sideADesc" class="sr-only">Input side a length, between 1 and 400 pixels</small>
+      </div>
+
+      <div class="form-group">
+        <label for="sideB"><span class="material-icons" aria-hidden="true">straighten</span>Side b (opposite)</label>
+        <input type="number" id="sideB" min="1" max="400" step="1" value="100" aria-describedby="sideBDesc" />
+        <input type="range" id="sideBSlider" min="1" max="400" step="1" value="100" aria-hidden="true" />
+        <small id="sideBDesc" class="sr-only">Input side b length, between 1 and 400 pixels</small>
+      </div>
+
+      <div class="form-group">
+        <label for="angleC"><span class="material-icons" aria-hidden="true">square_foot</span>Angle C (angle between a and b)</label>
+        <input type="number" id="angleC" min="30" max="150" step="1" value="90" aria-describedby="angleCDesc" />
+        <input type="range" id="angleCSlider" min="30" max="150" step="1" value="90" aria-hidden="true" />
+        <small id="angleCDesc" class="sr-only">Input angle C in degrees between 30 and 150</small>
+      </div>
+
+      <button id="resetBtn" type="button" aria-label="Reset triangle values to default">Reset values</button>
+    </section>
+      <div id="info" aria-live="polite" aria-atomic="true" aria-relevant="text" tabindex="0">
+        <!-- Trigonometric info and theorems will be shown here -->
+        <p><strong>Triangle info:</strong></p>
+        <p id="infoText">Adjust values to visualize the triangle.</p>
+
+        <hr />
+
+        <h3>Pythagoras Theorem</h3>
+        <p id="pythagorasText">For a right-angled triangle: c² = a² + b²</p>
+        <p id="pythagorasResult" style="font-weight: bold;"></p>
+
+        <hr />
+
+        <h3>Trigonometric Ratios for Angle C</h3>
+        <p>
+          sin(C) = opposite / hypotenuse = <span id="sinCVal">-</span><br />
+          cos(C) = adjacent / hypotenuse = <span id="cosCVal">-</span><br />
+          tan(C) = opposite / adjacent = <span id="tanCVal">-</span>
+        </p>
+
+        <hr />
+
+        <h3>Class 10 NCERT Key Notes</h3>
+        <ul style="margin:0; padding-left: 1.2em; color: #444;">
+          <li>The sum of the angles in a triangle is 180°.</li>
+          <li>Sine ratio = Opposite side / Hypotenuse</li>
+          <li>Cosine ratio = Adjacent side / Hypotenuse</li>
+          <li>Tangent ratio = Opposite side / Adjacent side</li>
+          <li>Pythagoras theorem applies only to right-angled triangles.</li>
+          <li>This tool allows you to experiment with these values interactively.</li>
+        </ul>
+      </div>
+  </main>
+
+<script>
+  (() => {
+    const canvas = document.getElementById('triangleCanvas');
+    const ctx = canvas.getContext('2d');
+
+    // Controls references
+    const sideAInput = document.getElementById('sideA');
+    const sideASlider = document.getElementById('sideASlider');
+    const sideBInput = document.getElementById('sideB');
+    const sideBSlider = document.getElementById('sideBSlider');
+    const angleCInput = document.getElementById('angleC');
+    const angleCSlider = document.getElementById('angleCSlider');
+    const resetBtn = document.getElementById('resetBtn');
+    const infoText = document.getElementById('infoText');
+
+    // Additional info elements for theorem/ratios
+    const pythagorasText = document.getElementById('pythagorasText');
+    const pythagorasResult = document.getElementById('pythagorasResult');
+    const sinCVal = document.getElementById('sinCVal');
+    const cosCVal = document.getElementById('cosCVal');
+    const tanCVal = document.getElementById('tanCVal');
+
+    // Keep inputs and sliders in sync
+    function bindInputs(numberInput, rangeInput) {
+      numberInput.addEventListener('input', () => {
+        let val = parseFloat(numberInput.value);
+        if (isNaN(val)) return;
+        if(val < parseFloat(numberInput.min)) val = parseFloat(numberInput.min);
+        if(val > parseFloat(numberInput.max)) val = parseFloat(numberInput.max);
+        numberInput.value = val;
+        rangeInput.value = val;
+        updateTriangle();
+      });
+      rangeInput.addEventListener('input', () => {
+        numberInput.value = rangeInput.value;
+        updateTriangle();
+      });
+    }
+
+    bindInputs(sideAInput, sideASlider);
+    bindInputs(sideBInput, sideBSlider);
+    bindInputs(angleCInput, angleCSlider);
+
+    // Helper functions
+    function toRadians(deg) {
+      return (deg * Math.PI) / 180;
+    }
+    function toDegrees(rad) {
+      return (rad * 180) / Math.PI;
+    }
+    function round(value, decimals=2) {
+      return Math.round(value * Math.pow(10, decimals)) / Math.pow(10, decimals);
+    }
+
+    // Draw right angle marker
+    function drawRightAngleMarker(x, y, size, angle) {
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.rotate(angle);
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      ctx.lineTo(0, size);
+      ctx.lineTo(size, size);
+      ctx.lineTo(size, 0);
+      ctx.strokeStyle = '#3b4cca';
+      ctx.lineWidth = 2.5;
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    // Draw the triangle based on sides a,b and angle C
+    function drawTriangle(a, b, angleCdeg) {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      const angleCrad = toRadians(angleCdeg);
+      // Calculate third side c using Law of Cosines
+      // c² = a² + b² - 2ab cos(C)
+      const c = Math.sqrt(a*a + b*b - 2*a*b*Math.cos(angleCrad));
+
+      // Check validity of triangle
+      if (isNaN(c) || c <= 0) {
+        infoText.textContent = 'Invalid triangle parameters, please adjust values.';
+        clearExtraInfo();
+        return;
+      }
+
+      // Calculate other angles via Law of Cosines
+      // angle A opposite side a
+      const angleA = toDegrees(Math.acos((b*b + c*c - a*a)/(2*b*c)));
+      // angle B opposite side b: total 180 - angleC - angleA
+      const angleB = 180 - angleCdeg - angleA;
+
+      // Start drawing triangle centered in canvas
+      const padding = 50;
+      const maxSide = Math.max(a,b,c);
+      const scaleFactor = Math.min((canvas.width - 2*padding) / maxSide, (canvas.height - 2*padding) / maxSide);
+
+      // Points coordinates scaled
+      const A = {x: padding, y: canvas.height - padding};
+      const B = {x: A.x + a*scaleFactor, y: A.y};
+      const C = {
+        x: B.x - b * scaleFactor * Math.cos(angleCrad),
+        y: B.y - b * scaleFactor * Math.sin(angleCrad)
+      };
+
+      // Draw triangle shape
+      ctx.beginPath();
+      ctx.moveTo(A.x, A.y);
+      ctx.lineTo(B.x, B.y);
+      ctx.lineTo(C.x, C.y);
+      ctx.closePath();
+
+      ctx.fillStyle = 'rgba(59, 76, 202, 0.15)';
+      ctx.fill();
+
+      ctx.strokeStyle = '#3b4cca';
+      ctx.lineWidth = 3;
+      ctx.stroke();
+
+      // Draw points with labels
+      function drawPoint(point, label, offsetX = 0, offsetY = 0) {
+        ctx.beginPath();
+        ctx.arc(point.x, point.y, 6, 0, Math.PI * 2);
+        ctx.fillStyle = '#3b4cca';
+        ctx.fill();
+        ctx.font = 'bold 16px Inter, sans-serif';
+        ctx.fillStyle = '#1a202c';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'bottom';
+        ctx.fillText(label, point.x + offsetX, point.y + offsetY);
+      }
+      drawPoint(A, 'A', 0, -10);
+      drawPoint(B, 'B', 0, -10);
+      drawPoint(C, 'C', 0, 20);
+
+      // Label sides: a opposite to A, b opposite to B, c opposite to C
+      ctx.font = '600 14px Inter, sans-serif';
+      ctx.fillStyle = '#3b4cca';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+
+      function midPoint(p1, p2) {
+        return { x: (p1.x + p2.x)/2, y: (p1.y + p2.y)/2 };
+      }
+      const midAB = midPoint(A, B);
+      const midBC = midPoint(B, C);
+      const midCA = midPoint(C, A);
+
+      ctx.fillText(`c = ${round(c)}`, midAB.x, midAB.y - 15);
+      ctx.fillText(`a = ${a}`, midBC.x + 15, midBC.y + 5);
+      ctx.fillText(`b = ${b}`, midCA.x - 15, midCA.y + 5);
+
+      // Label angles arcs
+      function drawAngleArc(px, py, startAngle, endAngle, radius = 30) {
+        ctx.beginPath();
+        ctx.strokeStyle = '#6d75ff';
+        ctx.lineWidth = 2;
+        ctx.arc(px, py, radius, startAngle, endAngle);
+        ctx.stroke();
+      }
+
+      // Angles radians - vectors to calculate arcs
+      let vecAB = { x: B.x - A.x, y: B.y - A.y };
+      let vecAC = { x: C.x - A.x, y: C.y - A.y };
+      let angleAstart = Math.atan2(vecAB.y, vecAB.x);
+      let angleAend = Math.atan2(vecAC.y, vecAC.x);
+      drawAngleArc(A.x, A.y, angleAstart, angleAend);
+
+      let vecBA = { x: A.x - B.x, y: A.y - B.y };
+      let vecBC = { x: C.x - B.x, y: C.y - B.y };
+      let angleBstart = Math.atan2(vecBA.y, vecBA.x);
+      let angleBend = Math.atan2(vecBC.y, vecBC.x);
+      drawAngleArc(B.x, B.y, angleBstart, angleBend);
+
+      let vecCA = { x: A.x - C.x, y: A.y - C.y };
+      let vecCB = { x: B.x - C.x, y: B.y - C.y };
+      let angleCstart = Math.atan2(vecCA.y, vecCA.x);
+      let angleCend = Math.atan2(vecCB.y, vecCB.x);
+      drawAngleArc(C.x, C.y, angleCstart, angleCend);
+
+      // Draw right angle marker if angleC near 90
+      if (Math.abs(angleCdeg - 90) < 5) {
+        const markerSize = 25;
+        function normalize(v){ const len = Math.hypot(v.x, v.y); return {x:v.x/len, y:v.y/len}; }
+        const nCA = normalize(vecCA);
+        const nCB = normalize(vecCB);
+        const markerX = C.x;
+        const markerY = C.y;
+        const rotAngle = Math.atan2(nCB.y, nCB.x) - Math.PI/2;
+        drawRightAngleMarker(markerX, markerY, markerSize, rotAngle);
+      }
+
+      // Update main info text
+      infoText.textContent = `Sides: a = ${a}, b = ${b}, c = ${round(c)} | Angles: A = ${round(angleA)}°, B = ${round(angleB)}°, C = ${round(angleCdeg)}°`;
+
+      // Update Pythagoras theorem info
+      updatePythagorasInfo(a, b, c, angleCdeg);
+      // Update trigonometric ratios info
+      updateTrigRatios(a, b, c, angleCdeg);
+    }
+
+    // Clear extra info when triangle invalid
+    function clearExtraInfo() {
+      pythagorasResult.textContent = '';
+      sinCVal.textContent = '-';
+      cosCVal.textContent = '-';
+      tanCVal.textContent = '-';
+    }
+
+    // Update Pythagoras theorem information dynamically
+    function updatePythagorasInfo(a, b, c, angleCdeg) {
+      if (Math.abs(angleCdeg - 90) < 5) {
+        // Right angled approx
+        const lhs = round(c*c);
+        const rhs = round(a*a + b*b);
+        const diff = round(Math.abs(lhs - rhs));
+        let statusMessage = '';
+        if (diff < 2) {
+          statusMessage = `Verified: ${lhs} ≈ ${rhs} (c² ≈ a² + b²)`;
+        } else {
+          statusMessage = `Note: Slight approximation difference: c² = ${lhs}, a²+b² = ${rhs}`;
+        }
+        pythagorasResult.textContent = statusMessage;
+        pythagorasText.textContent = 'For a right-angled triangle: c² = a² + b²';
+      } else {
+        // Not right angle
+        pythagorasText.textContent = 'Pythagoras theorem applies only to right-angled triangles.';
+        pythagorasResult.textContent = '';
+      }
+    }
+
+    // Update sine, cosine, tangent ratios for angle C
+    function updateTrigRatios(a, b, c, angleCdeg) {
+      // sinC = opposite/hypotenuse, here opposite = b, hypotenuse=c
+      // cosC = adjacent/hypotenuse, adjacent = a
+      // tanC = opposite/adjacent = b/a
+      if (c === 0 || a === 0) {
+        sinCVal.textContent = '-';
+        cosCVal.textContent = '-';
+        tanCVal.textContent = '-';
+        return;
+      }
+      const sinC = b / c;
+      const cosC = a / c;
+      const tanC = b / a;
+
+      sinCVal.textContent = `${round(sinC)} (${round(toDegrees(Math.asin(sinC)))}°)`;
+      cosCVal.textContent = `${round(cosC)} (${round(toDegrees(Math.acos(cosC)))}°)`;
+      tanCVal.textContent = `${round(tanC)}`;
+    }
+
+    // Update drawing when inputs change
+    function updateTriangle() {
+      const a = Number(sideAInput.value);
+      const b = Number(sideBInput.value);
+      const angleC = Number(angleCInput.value);
+
+      if (a <= 0 || b <= 0 || angleC <= 0 || angleC >= 180) {
+        infoText.textContent = "Please enter valid positive values for sides and angle between 1 and 179 degrees.";
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        clearExtraInfo();
+        return;
+      }
+      drawTriangle(a, b, angleC);
+    }
+
+    // Reset to default values
+    resetBtn.addEventListener('click', () => {
+      sideAInput.value = 150;
+      sideASlider.value = 150;
+      sideBInput.value = 100;
+      sideBSlider.value = 100;
+      angleCInput.value = 90;
+      angleCSlider.value = 90;
+      updateTriangle();
+    });
+
+    // Initial render
+    updateTriangle();
+
+  })();
+</script>
+
+</body>
+</html>
+
