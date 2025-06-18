@@ -1,0 +1,379 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Digital Logic Gates Theory</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8f9fa;
+            color: #343a40;
+        }
+        /* Custom styles for elements that Tailwind doesn't cover directly or for specific overrides */
+        .gate-card img {
+            border: 1px solid #ced4da;
+            border-radius: 8px;
+            padding: 5px;
+            background-color: #ffffff;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+        table {
+            border-collapse: collapse;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        th, td {
+            border: 1px solid #ced4da;
+            padding: 10px 15px;
+            text-align: center;
+        }
+        th {
+            background-color: #e9ecef;
+            font-weight: bold;
+            color: #343a40;
+        }
+        tr:nth-child(even) {
+            background-color: #f8f9fa;
+        }
+        tr:hover {
+            background-color: #e2e6ea;
+        }
+        .equation {
+            font-family: 'Courier New', monospace;
+        }
+        /* Modal specific styles for animation */
+        .modal-overlay {
+            transition: opacity 0.3s ease-in-out;
+        }
+        .modal-content {
+            transition: transform 0.3s ease-in-out, opacity 0.3s ease-in-out;
+        }
+        .modal-open .modal-content {
+            transform: translateY(0);
+            opacity: 1;
+        }
+        .navbar {
+    background-color: #333;
+    overflow: hidden;
+    padding: 10px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    margin: 0;
+}
+
+.navbar a {
+    float: left;
+    display: block;
+    color: white;
+    text-align: center;
+    padding: 14px 20px;
+    text-decoration: none;
+}
+
+.navbar a:hover {
+    background-color: #ddd;
+    color: black;
+}
+
+.navbar .logo {
+    font-size: 24px;
+    font-weight: bold;
+}
+    </style>
+</head>
+<body class="min-h-screen flex flex-col items-center px-8 py-3">
+    <div class="navbar">
+        <span class="logo">Digital Logic Gates Virtual Lab</span>
+        <div>
+            <a href="/">Home</a>
+            </div>
+    </div><br><br><br>
+    <div class="container max-w-4xl mx-auto px-6 py-8 bg-white rounded-xl shadow-lg border border-gray-200">
+        <h1 class="text-4xl font-extrabold text-blue-800 text-center mb-8">Digital Logic Gates: Theory and Principles</h1>
+        <p class="text-lg text-gray-700 mb-8 text-center">Click on any logic gate symbol below to learn about its definition, Boolean equation, and truth table!</p>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 mb-10">
+            <!-- AND Gate Card -->
+            <div class="gate-card bg-gray-50 p-4 rounded-lg shadow-md hover:shadow-xl transition-shadow duration-300 cursor-pointer flex flex-col items-center justify-center" data-gate-type="AND">
+                <h3 class="text-xl font-semibold text-gray-800 mb-2">AND Gate</h3>
+                <img src="https://upload.wikimedia.org/wikipedia/commons/b/b9/AND_ANSI_Labelled.svg" alt="AND Gate Symbol" class="w-32 h-auto" onerror="this.onerror=null;this.src='https://placehold.co/128x72/cccccc/333333?text=AND'">
+            </div>
+
+            <!-- OR Gate Card -->
+            <div class="gate-card bg-gray-50 p-4 rounded-lg shadow-md hover:shadow-xl transition-shadow duration-300 cursor-pointer flex flex-col items-center justify-center" data-gate-type="OR">
+                <h3 class="text-xl font-semibold text-gray-800 mb-2">OR Gate</h3>
+                <img src="https://upload.wikimedia.org/wikipedia/commons/1/16/OR_ANSI_Labelled.svg" alt="OR Gate Symbol" class="w-32 h-auto" onerror="this.onerror=null;this.src='https://placehold.co/128x72/cccccc/333333?text=OR'">
+            </div>
+
+            <!-- NOT Gate Card -->
+            <div class="gate-card bg-gray-50 p-4 rounded-lg shadow-md hover:shadow-xl transition-shadow duration-300 cursor-pointer flex flex-col items-center justify-center" data-gate-type="NOT">
+                <h3 class="text-xl font-semibold text-gray-800 mb-2">NOT Gate</h3>
+                <img src="https://upload.wikimedia.org/wikipedia/commons/6/60/NOT_ANSI_Labelled.svg" alt="NOT Gate Symbol" class="w-24 h-auto" onerror="this.onerror=null;this.src='https://placehold.co/96x72/cccccc/333333?text=NOT'">
+            </div>
+
+            <!-- NAND Gate Card -->
+            <div class="gate-card bg-gray-50 p-4 rounded-lg shadow-md hover:shadow-xl transition-shadow duration-300 cursor-pointer flex flex-col items-center justify-center" data-gate-type="NAND">
+                <h3 class="text-xl font-semibold text-gray-800 mb-2">NAND Gate</h3>
+                <img src="https://upload.wikimedia.org/wikipedia/commons/e/e6/NAND_ANSI_Labelled.svg" alt="NAND Gate Symbol" class="w-32 h-auto" onerror="this.onerror=null;this.src='https://placehold.co/128x72/cccccc/333333?text=NAND'">
+            </div>
+
+            <!-- NOR Gate Card -->
+            <div class="gate-card bg-gray-50 p-4 rounded-lg shadow-md hover:shadow-xl transition-shadow duration-300 cursor-pointer flex flex-col items-center justify-center" data-gate-type="NOR">
+                <h3 class="text-xl font-semibold text-gray-800 mb-2">NOR Gate</h3>
+                <img src="https://upload.wikimedia.org/wikipedia/commons/c/c6/NOR_ANSI_Labelled.svg" alt="NOR Gate Symbol" class="w-32 h-auto" onerror="this.onerror=null;this.src='https://placehold.co/128x72/cccccc/333333?text=NOR'">
+            </div>
+
+            <!-- XOR Gate Card -->
+            <div class="gate-card bg-gray-50 p-4 rounded-lg shadow-md hover:shadow-xl transition-shadow duration-300 cursor-pointer flex flex-col items-center justify-center" data-gate-type="XOR">
+                <h3 class="text-xl font-semibold text-gray-800 mb-2">XOR Gate</h3>
+                <img src="https://upload.wikimedia.org/wikipedia/commons/1/17/XOR_ANSI_Labelled.svg" alt="XOR Gate Symbol" class="w-32 h-auto" onerror="this.onerror=null;this.src='https://placehold.co/128x72/cccccc/333333?text=XOR'">
+            </div>
+
+            <!-- XNOR Gate Card -->
+            <div class="gate-card bg-gray-50 p-4 rounded-lg shadow-md hover:shadow-xl transition-shadow duration-300 cursor-pointer flex flex-col items-center justify-center" data-gate-type="XNOR">
+                <h3 class="text-xl font-semibold text-gray-800 mb-2">XNOR Gate</h3>
+                <img src="https://upload.wikimedia.org/wikipedia/commons/b/b8/XNOR_ANSI_Labelled.svg" alt="XNOR Gate Symbol" class="w-32 h-auto" onerror="this.onerror=null;this.src='https://placehold.co/128x72/cccccc/333333?text=XNOR'">
+            </div>
+
+            <!-- BUFFER Gate Card -->
+            <div class="gate-card bg-gray-50 p-4 rounded-lg shadow-md hover:shadow-xl transition-shadow duration-300 cursor-pointer flex flex-col items-center justify-center" data-gate-type="BUFFER">
+                <h3 class="text-xl font-semibold text-gray-800 mb-2">BUFFER Gate</h3>
+                <img src="https://upload.wikimedia.org/wikipedia/commons/1/1a/Buffer_ANSI_Labelled.svg" alt="BUFFER Gate Symbol" class="w-24 h-auto" onerror="this.onerror=null;this.src='https://placehold.co/96x72/cccccc/333333?text=BUFFER'">
+            </div>
+        </div>
+        <center><a href="digitalgates.html"><button class="bg-blue-600 text-white px-6 py-3 rounded-lg shadow-md hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-300 transition duration-300 ease-in-out active:bg-blue-800 cursor-pointer">Practice Now</button></a></center>
+    </div>
+
+    <!-- The Modal Structure -->
+    <div id="gateModal" class="modal-overlay fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 hidden opacity-0 transition-opacity duration-300">
+        <div class="modal-content bg-white p-8 rounded-lg shadow-2xl max-w-lg w-full transform -translate-y-10 opacity-0 transition-all duration-300 ease-out">
+            <div class="flex justify-between items-center mb-4">
+                <h2 id="modalTitle" class="text-2xl font-bold text-blue-700"></h2>
+                <button id="closeModalBtn" class="text-gray-500 hover:text-gray-700 text-3xl font-light leading-none">&times;</button>
+            </div>
+            <div class="mb-4">
+                <h3 class="text-lg font-semibold text-gray-700 mb-1">Definition:</h3>
+                <p id="modalDefinition" class="text-gray-600"></p>
+            </div>
+            <div class="mb-4">
+                <h3 class="text-lg font-semibold text-gray-700 mb-1">Boolean Equation:</h3>
+                <p id="modalEquation" class="equation text-blue-600 text-xl"></p>
+            </div>
+            <div>
+                <h3 class="text-lg font-semibold text-gray-700 mb-1">Truth Table:</h3>
+                <div id="modalTruthTable" class="text-gray-600"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const gateData = {
+            'AND': {
+                definition: 'An AND gate produces a HIGH output (1) only if all of its inputs are HIGH (1). If any input is LOW (0), the output is LOW (0).',
+                equation: '$Y = A \\cdot B$',
+                truthTable: `
+                    <table>
+                        <thead><tr><th>A</th><th>B</th><th>Y</th></tr></thead>
+                        <tbody>
+                            <tr><td>0</td><td>0</td><td>0</td></tr>
+                            <tr><td>0</td><td>1</td><td>0</td></tr>
+                            <tr><td>1</td><td>0</td><td>0</td></tr>
+                            <tr><td>1</td><td>1</td><td>1</td></tr>
+                        </tbody>
+                    </table>
+                `
+            },
+            'OR': {
+                definition: 'An OR gate produces a HIGH output (1) if any of its inputs are HIGH (1). The output is LOW (0) only if all inputs are LOW (0).',
+                equation: '$Y = A + B$',
+                truthTable: `
+                    <table>
+                        <thead><tr><th>A</th><th>B</th><th>Y</th></tr></thead>
+                        <tbody>
+                            <tr><td>0</td><td>0</td><td>0</td></tr>
+                            <tr><td>0</td><td>1</td><td>1</td></tr>
+                            <tr><td>1</td><td>0</td><td>1</td></tr>
+                            <tr><td>1</td><td>1</td><td>1</td></tr>
+                        </tbody>
+                    </table>
+                `
+            },
+            'NOT': {
+                definition: 'A NOT gate (also known as an Inverter) produces an output that is the complement of its single input. If the input is HIGH (1), the output is LOW (0), and vice versa.',
+                equation: '$Y = \\bar A$',
+                truthTable: `
+                    <table>
+                        <thead><tr><th>A</th><th>Y</th></tr></thead>
+                        <tbody>
+                            <tr><td>0</td><td>1</td></tr>
+                            <tr><td>1</td><td>0</td></tr>
+                        </tbody>
+                    </table>
+                `
+            },
+            'NAND': {
+                definition: 'A NAND gate (NOT AND) produces a LOW output (0) only if all of its inputs are HIGH (1). For any other combination of inputs, the output is HIGH (1).',
+                equation: '$Y = \\overline {A \\cdot B}$',
+                truthTable: `
+                    <table>
+                        <thead><tr><th>A</th><th>B</th><th>Y</th></tr></thead>
+                        <tbody>
+                            <tr><td>0</td><td>0</td><td>1</td></tr>
+                            <tr><td>0</td><td>1</td><td>1</td></tr>
+                            <tr><td>1</td><td>0</td><td>1</td></tr>
+                            <tr><td>1</td><td>1</td><td>0</td></tr>
+                        </tbody>
+                    </table>
+                `
+            },
+            'NOR': {
+                definition: 'A NOR gate (NOT OR) produces a HIGH output (1) only if all of its inputs are LOW (0). For any other combination of inputs, the output is LOW (0).',
+                equation: '$Y = \\overline{A + B}$',
+                truthTable: `
+                    <table>
+                        <thead><tr><th>A</th><th>B</th><th>Y</th></tr></thead>
+                        <tbody>
+                            <tr><td>0</td><td>0</td><td>1</td></tr>
+                            <tr><td>0</td><td>1</td><td>0</td></tr>
+                            <tr><td>1</td><td>0</td><td>0</td></tr>
+                            <tr><td>1</td><td>1</td><td>0</td></tr>
+                        </tbody>
+                    </table>
+                `
+            },
+            'XOR': {
+                definition: 'An XOR gate produces a HIGH output (1) if and only if its inputs are different (one is HIGH and the other is LOW). If the inputs are the same, the output is LOW (0).',
+                equation: '$Y = A \\oplus B$',
+                truthTable: `
+                    <table>
+                        <thead><tr><th>A</th><th>B</th><th>Y</th></tr></thead>
+                        <tbody>
+                            <tr><td>0</td><td>0</td><td>0</td></tr>
+                            <tr><td>0</td><td>1</td><td>1</td></tr>
+                            <tr><td>1</td><td>0</td><td>1</td></tr>
+                            <tr><td>1</td><td>1</td><td>0</td></tr>
+                        </tbody>
+                    </table>
+                `
+            },
+            'XNOR': {
+                definition: 'An XNOR gate produces a HIGH output (1) if and only if its inputs are the same (both HIGH or both LOW). If the inputs are different, the output is LOW (0). It is the inverse of an XOR gate.',
+                equation: '$Y = A \\odot B$',
+                truthTable: `
+                    <table>
+                        <thead><tr><th>A</th><th>B</th><th>Y</th></tr></thead>
+                        <tbody>
+                            <tr><td>0</td><td>0</td><td>1</td></tr>
+                            <tr><td>0</td><td>1</td><td>0</td></tr>
+                            <tr><td>1</td><td>0</td><td>0</td></tr>
+                            <tr><td>1</td><td>1</td><td>1</td></tr>
+                        </tbody>
+                    </table>
+                `
+            },
+            'BUFFER': {
+                definition: 'A BUFFER gate (or simply a Buffer) passes its input directly to its output without changing its logical state. It\'s often used to strengthen a signal or provide isolation between parts of a circuit, rather than for logical operation.',
+                equation: '$Y = A$',
+                truthTable: `
+                    <table>
+                        <thead><tr><th>A</th><th>Y</th></tr></thead>
+                        <tbody>
+                            <tr><td>0</td><td>0</td></tr>
+                            <tr><td>1</td><td>1</td></tr>
+                        </tbody>
+                    </table>
+                `
+            }
+        };
+
+        // Get modal elements
+        const gateModal = document.getElementById('gateModal');
+        const modalTitle = document.getElementById('modalTitle');
+        const modalDefinition = document.getElementById('modalDefinition');
+        const modalEquation = document.getElementById('modalEquation');
+        const modalTruthTable = document.getElementById('modalTruthTable');
+        const closeModalBtn = document.getElementById('closeModalBtn');
+        const gateCards = document.querySelectorAll('.gate-card');
+
+        // Function to show the modal
+        function showModal(gateType) {
+            const data = gateData[gateType];
+            if (data) {
+                modalTitle.textContent = `${gateType} Gate`;
+                modalDefinition.textContent = data.definition;
+                modalEquation.textContent = data.equation;
+                modalTruthTable.innerHTML = data.truthTable;
+
+                // Make modal visible and animate
+                gateModal.classList.remove('hidden', 'opacity-0');
+                gateModal.classList.add('flex', 'opacity-100');
+                setTimeout(() => {
+                    gateModal.querySelector('.modal-content').classList.remove('opacity-0', '-translate-y-10');
+                    gateModal.querySelector('.modal-content').classList.add('opacity-100', 'translate-y-0');
+                }, 10); // Small delay for transition
+
+                // Render MathJax equations within the modal
+                if (typeof MathJax !== 'undefined') {
+                    MathJax.typesetPromise([modalEquation]);
+                }
+            }
+        }
+
+        // Function to hide the modal
+        function hideModal() {
+            gateModal.querySelector('.modal-content').classList.remove('opacity-100', 'translate-y-0');
+            gateModal.querySelector('.modal-content').classList.add('opacity-0', '-translate-y-10');
+            setTimeout(() => {
+                gateModal.classList.remove('flex', 'opacity-100');
+                gateModal.classList.add('hidden', 'opacity-0');
+            }, 300); // Wait for transition to complete
+        }
+
+        // Add event listeners to each gate card
+        gateCards.forEach(card => {
+            card.addEventListener('click', () => {
+                const gateType = card.dataset.gateType;
+                showModal(gateType);
+            });
+        });
+
+        // Event listener for the close button
+        closeModalBtn.addEventListener('click', hideModal);
+
+        // Event listener to close modal when clicking outside content
+        gateModal.addEventListener('click', (e) => {
+            if (e.target === gateModal) { // Only if the click is directly on the overlay
+                hideModal();
+            }
+        });
+
+        // Initial MathJax configuration (can be placed here if not in <head>)
+        if (typeof MathJax !== 'undefined') {
+             MathJax.startup = {
+                 ready: () => {
+                     MathJax.startup.defaultReady();
+                     // Initial typesetting if any equations are present on page load (not in modal)
+                     MathJax.typesetPromise();
+                 }
+             };
+        }
+    </script>
+
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+<script type="text/javascript">
+    MathJax = {
+      tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']],
+        displayMath: [['$$', '$$'], ['\\[', '\\]']]
+      }
+    };
+ </script>
+</body>
+</html>

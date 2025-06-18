@@ -1,0 +1,1316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Digital Logic Gates</title>
+    <style>
+        *{padding: 0px;margin: 0px;}
+        body {
+            font-family: Arial, sans-serif;
+            /* margin: 20px; */
+            line-height: 1.6;
+            background-color: #f4f4f4;
+        }
+        h1, h2 {
+            color: #333;
+        }
+        .container {
+            display: flex;
+        }
+        .controls {
+            width: 300px;
+            padding: 20px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            margin-right: 20px;
+        }
+        .canvas-area {
+            flex-grow: 1;
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        canvas {
+            border: 1px solid #ccc;
+            background-color: #f9f9f9;
+        }
+        button {
+            padding: 10px;
+            margin: 5px 0;
+            width: 100%;
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        select, input {
+            margin: 5px 0;
+            padding: 5px;
+            width: 100%;
+        }
+        .gate-info {
+            margin-top: 20px;
+            font-size: 0.9em;
+        }
+        .zoom-controls {
+            display: flex;
+            gap: 10px; /* spacing between buttons */
+        }
+        .zoom-controls button {
+            flex: 1; /* optional: makes both buttons same width */
+        }
+        /* Styling for delete button */
+        .delete-button {
+            background-color: #dc3545; /* Red color for delete button */
+        }
+        .delete-button:hover {
+            background-color: #c82333;
+        }
+        /* Style for truth table */
+        #gate-details-panel table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 5px;
+        }
+        #gate-details-panel th, #gate-details-panel td {
+            border: 1px solid #ccc;
+            padding: 4px 8px;
+            text-align: center;
+        }
+        #gate-details-panel th {
+            background-color: #f2f2f2;
+        }
+        .navbar {
+    background-color: #333;
+    overflow: hidden;
+    padding: 10px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    margin: 0;
+}
+
+.navbar a {
+    float: left;
+    display: block;
+    color: white;
+    text-align: center;
+    padding: 14px 20px;
+    text-decoration: none;
+}
+
+.navbar a:hover {
+    background-color: #ddd;
+    color: black;
+}
+
+.navbar .logo {
+    font-size: 24px;
+    font-weight: bold;
+}
+
+    </style>
+</head>
+<body>
+    <div class="navbar">
+        <span class="logo">Digital Logic Gates Virtual Lab</span>
+        <div>
+            <a href="/">Home</a>
+            </div>
+    </div>
+    <h1>Digital Logic Gates Virtual Lab </h1>
+    <p>Select a gate type, drag on the Circuit board to draw it , connect with wires, and see the LED glow! You can also multi-select by dragging a box, resize selected elements by dragging their bottom-right corner, and delete with the 'Delete' key.</p>
+    <div class="container">
+        <div class="controls">
+            <h2>Components</h2>
+            <label for="drawGateType">Select Gate to Draw:</label>
+            <select id="drawGateType">
+                <option value="none">Select...</option>
+                <option value="AND">AND Gate</option>
+                <option value="OR">OR Gate</option>
+                <option value="NOT">NOT Gate</option>
+                <option value="LED">LED</option>
+                <option value="Battery">Battery</option>
+                <option value="NAND">NAND Gate</option>
+                <option value="NOR">NOR Gate</option>
+                <option value="XOR">XOR Gate</option>
+                <option value="XNOR">XNOR Gate</option>
+                <option value="BUFFER">BUFFER</option>
+            </select>
+            <button onclick="startWire()">Add Wire</button>
+
+            <button onclick="toggleSelectedBattery()">Toggle Battery</button>
+            <hr>
+            <button onclick="deleteSelectedElements()" class="delete-button">Delete Selected</button>
+            <hr>
+            <div class="gate-info">
+                <h3>Selected Elements</h3>
+                <p id="selected-info">None selected</p>
+                <select id="input1" onchange="updateConnections()" disabled>
+                    <option value="none">Input 1: None</option>
+                    <option value="true">Input 1: True</option>
+                    <option value="false">Input 1: False</option>
+                </select>
+                <select id="input2" onchange="updateConnections()" disabled>
+                    <option value="none">Input 2: None</option>
+                    <option value="true">Input 2: True</option>
+                    <option value="false">Input 2: False</option>
+                </select>
+                <p>Wire: Click "Add Wire", then select source and target elements. Input circles are now at the top of gates.</p>
+            </div>
+        </div>
+        <div class="canvas-area">
+            <h2>Circuit board</h2>
+            <canvas id="logicCanvas" width="800" height="400"></canvas>
+            <div class="zoom-controls">
+                <button onclick="zoomIn()">Zoom In</button>
+                <button onclick="zoomOut()">Zoom Out</button>
+            </div>
+        </div>
+        <div class="controls">
+            
+            <div id="gate-details-panel"></div>
+        </div>
+    </div>
+    <div class="controls" style="width: 100%;"><center><a href="learngates.html"><button style="width: max-content;" class="bg-blue-600 text-white px-6 py-3 rounded-lg shadow-md hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-300 transition duration-300 ease-in-out active:bg-blue-800 cursor-pointer"> Learn the Logic Gates definations</button></a></center></div>
+
+    <script>
+        const canvas = document.getElementById('logicCanvas');
+        const ctx = canvas.getContext('2d');
+        const drawGateTypeSelect = document.getElementById('drawGateType');
+
+        let zoomScale = 1;
+        let elements = [];
+        let wires = [];
+        let selectedElements = [];
+        let isDraggingElement = false;
+        let isDrawingGate = false;
+        let isSelectingRectangle = false;
+        let isResizingElement = false; // New state for resizing
+        let resizeHandleType = null;   // e.g., 'br' for bottom-right
+        let elementBeingResized = null; // Reference to the element currently being resized
+        let startX, startY; // For drawing, dragging, or selecting rectangle
+        let resizeStartMouseX, resizeStartMouseY; // Mouse position when resize started
+        let resizeStartWidth, resizeStartHeight; // Element's dimensions when resize started
+
+        let currentDrawingGateType = 'none';
+
+        let isWiring = false;
+        let wireSource = null;
+
+        // Element class for gates
+        class Element {
+            constructor(type, x, y, width, height) {
+                this.type = type;
+                this.x = x;
+                this.y = y;
+                this.width = width;
+                this.height = height;
+                this.input1 = null;
+                this.input2 = (type === 'NOT' || type === 'LED' || type === 'Battery') ? null : null;
+                this.output = false;
+                this.id = elements.length;
+
+                // Pin positions are relative to element's dimensions
+                this.input1Pin = { x: this.width * 0.25, y: 0 };
+                this.input2Pin = { x: this.width * 0.75, y: 0 };
+                this.outputPin = { x: this.width / 2, y: this.height };
+                if (type === 'NOT' || type === 'BUFFER') {
+                    this.input1Pin = { x: this.width / 2, y: 0 };
+                    this.input2Pin = null;
+                }
+            }
+
+            draw() {
+                try {
+                    ctx.beginPath();
+                    ctx.fillStyle = selectedElements.includes(this) ? '#e0e0e0' : '#ffffff';
+                    ctx.strokeStyle = '#000000';
+                    ctx.lineWidth = 2;
+                    ctx.rect(this.x, this.y, this.width, this.height);
+                    ctx.fill();
+                    ctx.stroke();
+                    ctx.fillStyle = '#000000';
+                    ctx.font = '14px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText(this.type, this.x + this.width / 2, this.y + this.height / 2);
+
+                    ctx.beginPath();
+                    ctx.arc(this.x + this.input1Pin.x, this.y + this.input1Pin.y, 5, 0, Math.PI * 2);
+                    ctx.fillStyle = this.input1 === true ? '#00ff00' : this.input1 === false ? '#ff0000' : '#cccccc';
+                    ctx.fill();
+                    ctx.stroke();
+
+                    if (this.input2Pin) {
+                        ctx.beginPath();
+                        ctx.arc(this.x + this.input2Pin.x, this.y + this.input2Pin.y, 5, 0, Math.PI * 2);
+                        ctx.fillStyle = this.input2 === true ? '#00ff00' : this.input2 === false ? '#ff0000' : '#cccccc';
+                        ctx.fill();
+                        ctx.stroke();
+                    }
+
+                    ctx.beginPath();
+                    ctx.arc(this.x + this.outputPin.x, this.y + this.outputPin.y, 5, 0, Math.PI * 2);
+                    ctx.fillStyle = this.output ? '#00ff00' : '#ff0000';
+                    ctx.fill();
+                    ctx.stroke();
+
+                    // Draw resize handles if selected
+                    if (selectedElements.includes(this)) {
+                        this.drawResizeHandles();
+                    }
+
+                } catch (e) {
+                    console.error('Error drawing element:', e);
+                }
+            }
+
+            // Draws the resize handles for this element
+            drawResizeHandles() {
+                const handleSize = 8;
+                const halfHandle = handleSize / 2;
+
+                // Bottom-right handle
+                ctx.fillStyle = '#007BFF'; // Blue handles
+                ctx.strokeStyle = '#000000';
+                ctx.lineWidth = 1;
+                ctx.fillRect(this.x + this.width - halfHandle, this.y + this.height - halfHandle, handleSize, handleSize);
+                ctx.strokeRect(this.x + this.width - halfHandle, this.y + this.height - halfHandle, handleSize, handleSize);
+            }
+
+            // Checks if a given coordinate is over a resize handle
+            getHandleAt(mx, my) {
+                const handleSize = 8;
+                const halfHandle = handleSize / 2;
+
+                // Check bottom-right handle
+                if (mx > (this.x + this.width - halfHandle) && mx < (this.x + this.width + halfHandle) &&
+                    my > (this.y + this.height - halfHandle) && my < (this.y + this.height + halfHandle)) {
+                    return 'br'; // Bottom-right
+                }
+                return null;
+            }
+
+
+            isInside(mx, my) {
+                return mx > this.x && mx < this.x + this.width && my > this.y && my < this.y + this.height;
+            }
+
+            isOverInputPin(mx, my) {
+                const pin1Dist = Math.sqrt(Math.pow(mx - (this.x + this.input1Pin.x), 2) + Math.pow(my - (this.y + this.input1Pin.y), 2));
+                if (pin1Dist < 5) return 'input1';
+                if (this.input2Pin) {
+                    const pin2Dist = Math.sqrt(Math.pow(mx - (this.x + this.input2Pin.x), 2) + Math.pow(my - (this.y + this.input2Pin.y), 2));
+                    if (pin2Dist < 5) return 'input2';
+                }
+                return null;
+            }
+
+            isOverOutputPin(mx, my) {
+                const pinDist = Math.sqrt(Math.pow(mx - (this.x + this.outputPin.x), 2) + Math.pow(my - (this.y + this.outputPin.y), 2));
+                return pinDist < 5;
+            }
+
+            intersects(rectX, rectY, rectWidth, rectHeight) {
+                return this.x < rectX + rectWidth &&
+                       this.x + this.width > rectX &&
+                       this.y < rectY + rectHeight &&
+                       this.y + this.height > rectY;
+            }
+
+            computeOutput() {
+                try {
+                    if (this.type === 'AND') {
+                        this.output = this.input1 === true && this.input2 === true;
+                    } else if (this.type === 'OR') {
+                        this.output = this.input1 === true || this.input2 === true;
+                    } else if (this.type === 'NOT') {
+                        this.output = this.input1 === false;
+                    } else if (this.type === 'NAND') {
+                        this.output = !(this.input1 === true && this.input2 === true);
+                    } else if (this.type === 'NOR') {
+                        this.output = !(this.input1 === true || this.input2 === true);
+                    } else if (this.type === 'XOR') {
+                        this.output = (this.input1 !== this.input2);
+                    } else if (this.type === 'XNOR') {
+                        this.output = (this.input1 === this.input2);
+                    } else if (this.type === 'BUFFER') {
+                        this.output = this.input1;
+                    } else if (this.type === 'Battery') {
+                        this.powered = true;
+                        this.output = this.powered;
+                    }
+                } catch (e) {
+                    console.error('Error computing output for', this.type, ':', e);
+                }
+            }
+        }
+
+        class LED {
+            constructor(x, y) {
+                this.type = 'LED';
+                this.x = x;
+                this.y = y;
+                this.width = 40;
+                this.height = 40; // Maintain square for LED
+                this.input = null;
+                this.output = false;
+                this.id = elements.length;
+
+                this.inputPin = { x: this.width / 2, y: 0 };
+            }
+
+            draw() {
+                try {
+                    ctx.beginPath();
+                    ctx.arc(this.x + this.width / 2, this.y + this.height / 2, this.width / 2 - 5, 0, Math.PI * 2); // Circle based on width/height
+                    ctx.fillStyle = this.output ? '#00ff00' : '#cccccc';
+                    ctx.fill();
+                    ctx.strokeStyle = '#000000';
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
+                    ctx.fillStyle = '#000000';
+                    ctx.font = '14px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText("LED", this.x + this.width / 2, this.y + this.height / 2);
+
+                    ctx.beginPath();
+                    ctx.arc(this.x + this.inputPin.x, this.y + this.inputPin.y, 5, 0, Math.PI * 2);
+                    ctx.fillStyle = this.input === true ? '#00ff00' : this.input === false ? '#ff0000' : '#cccccc';
+                    ctx.fill();
+                    ctx.stroke();
+
+                    // Draw resize handles if selected
+                    if (selectedElements.includes(this)) {
+                        this.drawResizeHandles();
+                    }
+
+                } catch (e) {
+                    console.error('Error drawing LED:', e);
+                }
+            }
+
+            drawResizeHandles() {
+                const handleSize = 8;
+                const halfHandle = handleSize / 2;
+                // Draw handle at the bottom-right of its bounding box
+                ctx.fillStyle = '#007BFF';
+                ctx.strokeStyle = '#000000';
+                ctx.lineWidth = 1;
+                ctx.fillRect(this.x + this.width - halfHandle, this.y + this.height - halfHandle, handleSize, handleSize);
+                ctx.strokeRect(this.x + this.width - halfHandle, this.y + this.height - halfHandle, handleSize, handleSize);
+            }
+
+            getHandleAt(mx, my) {
+                const handleSize = 8;
+                const halfHandle = handleSize / 2;
+                if (mx > (this.x + this.width - halfHandle) && mx < (this.x + this.width + halfHandle) &&
+                    my > (this.y + this.height - halfHandle) && my < (this.y + this.height + halfHandle)) {
+                    return 'br';
+                }
+                return null;
+            }
+
+            isInside(mx, my) {
+                const dx = mx - (this.x + this.width / 2);
+                const dy = my - (this.y + this.height / 2);
+                return Math.sqrt(dx * dx + dy * dy) < (this.width / 2 - 5); // Based on actual drawn circle radius
+            }
+
+            isOverInputPin(mx, my) {
+                const pinDist = Math.sqrt(Math.pow(mx - (this.x + this.inputPin.x), 2) + Math.pow(my - (this.y + this.inputPin.y), 2));
+                return pinDist < 5 ? 'input' : null;
+            }
+
+            isOverOutputPin(mx, my) {
+                return null;
+            }
+
+            intersects(rectX, rectY, rectWidth, rectHeight) {
+                return this.x < rectX + rectWidth &&
+                       this.x + this.width > rectX &&
+                       this.y < rectY + rectHeight &&
+                       this.y + this.height > rectY;
+            }
+
+            computeOutput() {
+                try {
+                    this.output = this.input === true;
+                } catch (e) {
+                    console.error('Error computing LED output:', e);
+                }
+            }
+        }
+
+        class Battery {
+            constructor(x, y) {
+                this.type = 'Battery';
+                this.x = x;
+                this.y = y;
+                this.width = 60;
+                this.height = 30;
+                this.powered  = true
+                this.output = this.powered;
+                this.id = elements.length;
+
+                this.outputPin = { x: this.width / 2, y: this.height };
+            }
+
+            draw() {
+                try {
+                    ctx.beginPath();
+                    ctx.fillStyle = selectedElements.includes(this) ? '#e0e0e0' : '#ffffff';
+                    ctx.strokeStyle = '#000000';
+                    ctx.lineWidth = 2;
+                    ctx.rect(this.x, this.y, this.width, this.height);
+                    ctx.fill();
+                    ctx.stroke();
+                    ctx.fillStyle = '#000000';
+                    ctx.font = '14px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText("Battery", this.x + this.width / 2, this.y + this.height / 2);
+
+                    ctx.beginPath();
+                    ctx.arc(this.x + this.outputPin.x, this.y + this.outputPin.y, 5, 0, Math.PI * 2);
+                    ctx.fillStyle = this.output ? '#00ff00' : '#ff0000';
+                    ctx.fill();
+                    ctx.stroke();
+
+                    // Draw resize handles if selected
+                    if (selectedElements.includes(this)) {
+                        this.drawResizeHandles();
+                    }
+
+                } catch (e) {
+                    console.error('Error drawing Battery:', e);
+                }
+            }
+
+            drawResizeHandles() {
+                const handleSize = 8;
+                const halfHandle = handleSize / 2;
+                // Draw handle at the bottom-right of its bounding box
+                ctx.fillStyle = '#007BFF';
+                ctx.strokeStyle = '#000000';
+                ctx.lineWidth = 1;
+                ctx.fillRect(this.x + this.width - halfHandle, this.y + this.height - halfHandle, handleSize, handleSize);
+                ctx.strokeRect(this.x + this.width - halfHandle, this.y + this.height - halfHandle, handleSize, handleSize);
+            }
+
+            getHandleAt(mx, my) {
+                const handleSize = 8;
+                const halfHandle = handleSize / 2;
+                if (mx > (this.x + this.width - halfHandle) && mx < (this.x + this.width + halfHandle) &&
+                    my > (this.y + this.height - halfHandle) && my < (this.y + this.height + halfHandle)) {
+                    return 'br';
+                }
+                return null;
+            }
+
+            isInside(mx, my) {
+                return mx > this.x && mx < this.x + this.width && my > this.y && my < this.y + this.height;
+            }
+
+            isOverInputPin(mx, my) {
+                return null;
+            }
+
+            isOverOutputPin(mx, my) {
+                const pinDist = Math.sqrt(Math.pow(mx - (this.x + this.outputPin.x), 2) + Math.pow(my - (this.y + this.outputPin.y), 2));
+                return pinDist < 5;
+            }
+
+            computeOutput() {
+                this.output = this.powered;
+            }
+        }
+
+        class Wire {
+            constructor(sourceElement, targetElement, targetInputSlot) {
+                this.source = sourceElement;
+                this.target = targetElement;
+                this.inputSlot = targetInputSlot;
+            }
+
+            draw() {
+                try {
+                    ctx.beginPath();
+                    ctx.strokeStyle = '#000000';
+                    ctx.lineWidth = 2;
+
+                    const sourceX = this.source.x + this.source.outputPin.x;
+                    const sourceY = this.source.y + this.source.outputPin.y;
+
+                    let targetX, targetY;
+                    if (this.target.type === 'LED') {
+                        targetX = this.target.x + this.target.inputPin.x;
+                        targetY = this.target.y + this.target.inputPin.y;
+                    } else if (this.target.type === 'NOT' || this.target.type === 'BUFFER') {
+                        targetX = this.target.x + this.target.input1Pin.x;
+                        targetY = this.target.y + this.target.input1Pin.y;
+                    } else {
+                        targetX = this.target.x + (this.inputSlot === 'input1' ? this.target.input1Pin.x : this.target.input2Pin.x);
+                        targetY = this.target.y + (this.inputSlot === 'input1' ? this.target.input1Pin.y : this.target.input2Pin.y);
+                    }
+
+                    ctx.moveTo(sourceX, sourceY);
+                    ctx.lineTo(targetX, targetY);
+                    ctx.stroke();
+                } catch (e) {
+                    console.error('Error drawing wire:', e);
+                }
+            }
+        }
+
+        function addLED() {
+            try {
+                elements.push(new LED(50, 50));
+                updateCanvas();
+            } catch (e) {
+                console.error('Error adding LED:', e);
+            }
+        }
+
+        function addBattery() {
+            try {
+                elements.push(new Battery(50, 50));
+                updateCanvas();
+            } catch (e) {
+                console.error('Error adding Battery:', e);
+            }
+        }
+
+        function startWire() {
+            try {
+                isWiring = true;
+                wireSource = null;
+                document.getElementById('selected-info').innerText = 'Click an output pin for the wire source.';
+                // Exit other modes
+                isDrawingGate = false;
+                isSelectingRectangle = false;
+                isResizingElement = false; // Reset resize mode
+                selectedElements = [];
+                updateCanvas();
+                updateInfoPanel(); // Clear additional info when starting wire mode
+            } catch (e) {
+                console.error('Error starting wire:', e);
+            }
+        }
+
+        function updateCanvas() {
+            try {
+                ctx.setTransform(1, 0, 0, 1, 0, 0);
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+                ctx.save();
+                ctx.scale(zoomScale, zoomScale);
+
+                wires.forEach(wire => wire.draw());
+                elements.forEach(element => element.draw());
+
+                // Draw the selection rectangle if active
+                if (isSelectingRectangle && startX !== undefined && startY !== undefined) {
+                    const rect = canvas.getBoundingClientRect();
+                    const currentMx = (lastMouseX - rect.left) / zoomScale;
+                    const currentMy = (lastMouseY - rect.top) / zoomScale;
+
+                    const x = Math.min(startX, currentMx);
+                    const y = Math.min(startY, currentMy);
+                    const width = Math.abs(currentMx - startX);
+                    const height = Math.abs(currentMy - startY);
+
+                    ctx.strokeStyle = '#007BFF';
+                    ctx.lineWidth = 1;
+                    ctx.setLineDash([5, 5]);
+                    ctx.strokeRect(x, y, width, height);
+                    ctx.setLineDash([]);
+                    ctx.fillStyle = 'rgba(0, 123, 255, 0.1)';
+                    ctx.fillRect(x, y, width, height);
+                }
+
+                ctx.restore();
+            } catch (e) {
+                console.error('Error updating canvas:', e);
+            }
+        }
+
+
+        function updateConnections() {
+            try {
+                if (selectedElements.length === 1) {
+                    const selectedElement = selectedElements[0];
+                    const input1Select = document.getElementById('input1');
+                    const input2Select = document.getElementById('input2');
+
+                    input1Select.disabled = wires.some(w => w.target === selectedElement && (w.inputSlot === 'input1' || w.inputSlot === 'input'));
+                    input2Select.disabled = wires.some(w => w.target === selectedElement && w.inputSlot === 'input2') || selectedElement.type === 'NOT' || selectedElement.type === 'LED' || selectedElement.type === 'Battery' || selectedElement.type === 'BUFFER';
+
+
+                    if (!input1Select.disabled) {
+                        const input1Val = input1Select.value;
+                        if (selectedElement.type === 'LED') {
+                            selectedElement.input = input1Val === 'true' ? true : input1Val === 'false' ? false : null;
+                        } else {
+                            selectedElement.input1 = input1Val === 'true' ? true : input1Val === 'false' ? false : null;
+                        }
+                    }
+
+                    if (!input2Select.disabled) {
+                        const input2Val = input2Select.value;
+                        selectedElement.input2 = input2Val === 'true' ? true : input2Val === 'false' ? false : null;
+                    }
+                    selectedElement.computeOutput();
+                    updateCircuit();
+                    // document.getElementById('selected-info').innerText = `Selected: ${selectedElement.type} (ID: ${selectedElement.id})`; // Handled by updateInfoPanel
+                } // else handled by updateInfoPanel
+                updateCanvas();
+                updateInfoPanel(); // Call updateInfoPanel to refresh data
+            } catch (e) {
+                console.error('Error updating connections:', e);
+            }
+        }
+
+        function updateCircuit() {
+            try {
+                elements.forEach(element => {
+                    if (element.type === 'LED') {
+                        element.input = null;
+                    } else if (element.type !== 'Battery') {
+                        const hasInput1Wire = wires.some(w => w.target === element && (w.inputSlot === 'input1' || w.inputSlot === 'input'));
+                        const hasInput2Wire = wires.some(w => w.target === element && w.inputSlot === 'input2');
+
+                        if (element.type !== 'Battery') {
+                            if (!hasInput1Wire) element.input1 = element.input1 ?? null;
+                            if (element.input2 !== undefined && !hasInput2Wire) {
+                                element.input2 = element.input2 ?? null;
+                            }
+                        }
+                    }
+                });
+
+                let computed = new Set();
+                let iterations = 0;
+                const maxIterations = elements.length * 2;
+
+                while (computed.size < elements.length && iterations < maxIterations) {
+                    let madeProgress = false;
+                    for (const element of elements) {
+                        if (computed.has(element)) continue;
+
+                        if (element.type === 'Battery') {
+                            element.computeOutput();
+                            computed.add(element);
+                            madeProgress = true;
+                            continue;
+                        }
+
+                        let inputsReady = true;
+                        const incomingWires = wires.filter(w => w.target === element);
+
+                        if (element.type === 'LED') {
+                            const ledWire = incomingWires.find(w => w.target === element);
+                            if (ledWire) {
+                                if (!computed.has(ledWire.source)) {
+                                    inputsReady = false;
+                                } else {
+                                    element.input = ledWire.source.output;
+                                }
+                            } else {
+                                if (!document.getElementById('input1').disabled && selectedElements.includes(element)) {
+                                     const inputVal = document.getElementById('input1').value;
+                                     element.input = inputVal === 'true' ? true : inputVal === 'false' ? false : null;
+                                } else { // If no wire and not manually set, default to null
+                                    element.input = null;
+                                }
+                            }
+                        } else { // For gates
+                            const wire1 = incomingWires.find(w => w.inputSlot === 'input1'); // This includes LED's 'input'
+                            const wire2 = incomingWires.find(w => w.inputSlot === 'input2');
+
+                            if (wire1) {
+                                if (!computed.has(wire1.source)) {
+                                    inputsReady = false;
+                                } else {
+                                    element.input1 = wire1.source.output;
+                                }
+                            } else {
+                                if (selectedElements.includes(element) && !document.getElementById('input1').disabled) {
+                                    const inputVal = document.getElementById('input1').value;
+                                    element.input1 = inputVal === 'true' ? true : inputVal === 'false' ? false : null;
+                                } else { // Default to null if no wire and not manually set
+                                    element.input1 = null;
+                                }
+                            }
+
+                            if (element.input2Pin) { // Only check input2 if it exists for the gate type
+                                if (wire2) {
+                                    if (!computed.has(wire2.source)) {
+                                        inputsReady = false;
+                                    } else {
+                                        element.input2 = wire2.source.output;
+                                    }
+                                } else {
+                                    if (selectedElements.includes(element) && !document.getElementById('input2').disabled) {
+                                        const inputVal = document.getElementById('input2').value;
+                                        element.input2 = inputVal === 'true' ? true : inputVal === 'false' ? false : null;
+                                    } else { // Default to null if no wire and not manually set
+                                        element.input2 = null;
+                                    }
+                                }
+                            }
+                        }
+
+                        if (inputsReady) {
+                            element.computeOutput();
+                            computed.add(element);
+                            madeProgress = true;
+                        }
+                    }
+                    if (!madeProgress && computed.size < elements.length) {
+                        console.warn("Could not compute all elements. Possible unpowered circuit or unhandled dependencies.");
+                        break;
+                    }
+                    iterations++;
+                }
+                updateCanvas();
+            } catch (e) {
+                console.error('Error updating circuit:', e);
+            }
+        }
+
+
+        let lastMouseX, lastMouseY; // To store current mouse position for drawing selection rectangle
+
+        // Mouse Down Event
+        canvas.addEventListener('mousedown', (e) => {
+            try {
+                const rect = canvas.getBoundingClientRect();
+                const mx = (e.clientX - rect.left) / zoomScale; // Adjust for zoom
+                const my = (e.clientY - rect.top) / zoomScale; // Adjust for zoom
+
+                // 1. Check for resize handle click (ONLY if a single element is selected)
+                if (selectedElements.length === 1) {
+                    const selected = selectedElements[0];
+                    const handle = selected.getHandleAt(mx, my);
+                    if (handle) {
+                        isResizingElement = true;
+                        resizeHandleType = handle;
+                        elementBeingResized = selected;
+                        resizeStartMouseX = mx;
+                        resizeStartMouseY = my;
+                        resizeStartWidth = selected.width;
+                        resizeStartHeight = selected.height;
+
+                        // Disable other interaction modes
+                        isDraggingElement = false;
+                        isDrawingGate = false;
+                        isWiring = false;
+                        isSelectingRectangle = false;
+                        return; // Stop further processing in mousedown
+                    }
+                }
+
+                // 2. If not resizing, check for drawing a new gate
+                if (currentDrawingGateType !== 'none') {
+                    isDrawingGate = true;
+                    startX = mx;
+                    startY = my;
+                    selectedElements = [];
+                    updateInfoPanel();
+                    return;
+                }
+
+                // 3. If not drawing or resizing, check for wiring
+                if (isWiring) {
+                    let clickedPin = null;
+                    for (let element of elements) {
+                        if (element.isOverOutputPin(mx, my)) {
+                            wireSource = element;
+                            document.getElementById('selected-info').innerText = `Source selected: ${wireSource.type} (ID: ${wireSource.id}). Now click a target input pin.`;
+                            updateCanvas();
+                            return;
+                        } else if (wireSource && element.isOverInputPin(mx, my)) {
+                            clickedPin = element.isOverInputPin(mx, my);
+                            if (clickedPin) {
+                                // If an existing wire is found, remove it to allow the new connection
+                                const existingWireIndex = wires.findIndex(w => w.target === element && w.inputSlot === clickedPin);
+                                if (existingWireIndex !== -1) {
+                                    wires.splice(existingWireIndex, 1);
+                                    console.log(`Replaced existing wire on input ${clickedPin} of ${element.type} (ID: ${element.id}).`);
+                                }
+
+                                if (wireSource === element) {
+                                     alert("Cannot connect an element to itself.");
+                                     isWiring = false;
+                                     wireSource = null;
+                                     document.getElementById('selected-info').innerText = 'Wire cancelled. Select source element for wire.';
+                                     updateCanvas();
+                                     return;
+                                }
+
+                                wires.push(new Wire(wireSource, element, clickedPin));
+                                isWiring = false;
+                                wireSource = null;
+                                document.getElementById('selected-info').innerText = 'Wire added.';
+                                updateCircuit();
+                                updateCanvas();
+                                return;
+                            }
+                        }
+                    }
+                    if (isWiring) { // If clicked outside any pin while in wiring mode
+                        isWiring = false;
+                        wireSource = null;
+                        document.getElementById('selected-info').innerText = 'Wire cancelled. No valid pin clicked.';
+                        updateCanvas();
+                        updateInfoPanel(); // Clear additional info when wiring cancelled
+                    }
+                    return; // Stop further processing if wiring was attempted
+                }
+
+                // 4. If not resizing, drawing, or wiring, handle element selection/dragging or rectangle selection
+                let clickedElement = null;
+                for (let element of elements) {
+                    if (element.isInside(mx, my)) {
+                        clickedElement = element;
+                        break;
+                    }
+                }
+
+                if (clickedElement) {
+                    // If an element was clicked, initiate dragging or multi-selection
+                    if (e.shiftKey) { // Allow multi-selection with Shift key
+                        if (!selectedElements.includes(clickedElement)) {
+                            selectedElements.push(clickedElement);
+                        } else {
+                            selectedElements = selectedElements.filter(el => el !== clickedElement);
+                        }
+                    } else { // Single selection (or start dragging current selection)
+                        // If not multi-selecting, and clicked on an unselected element, clear current selection
+                        if (!selectedElements.includes(clickedElement) || selectedElements.length > 1) {
+                             selectedElements = [clickedElement];
+                        }
+                    }
+                    isDraggingElement = true;
+                    offsetX = mx - clickedElement.x; // Store offset relative to the *clicked* element for dragging
+                    offsetY = my - clickedElement.y;
+                    updateInfoPanel();
+                } else {
+                    // Clicked on empty canvas, initiate rectangle selection
+                    if (!e.shiftKey) { // Start new selection if not adding to existing
+                        selectedElements = []; // Clear previous selection
+                    }
+                    isSelectingRectangle = true;
+                    startX = mx;
+                    startY = my;
+                    updateInfoPanel();
+                }
+                updateCanvas();
+            } catch (e) {
+                console.error('Error in mousedown event:', e);
+            }
+        });
+
+        // Mouse Move Event
+        // let lastMouseX, lastMouseY; // REMOVED: Already declared at top-level
+        canvas.addEventListener('mousemove', (e) => {
+            try {
+                const rect = canvas.getBoundingClientRect();
+                lastMouseX = e.clientX; // Store for drawing selection rectangle
+                lastMouseY = e.clientY; // Store for drawing selection rectangle
+                const mx = (e.clientX - rect.left) / zoomScale;
+                const my = (e.clientY - rect.top) / zoomScale;
+
+                if (isResizingElement && elementBeingResized) {
+                    const dx = mx - resizeStartMouseX;
+                    const dy = my - resizeStartMouseY;
+
+                    let newWidth = resizeStartWidth;
+                    let newHeight = resizeStartHeight;
+                    const minSize = 40; // Minimum dimension for elements
+
+                    if (resizeHandleType === 'br') { // Bottom-right handle
+                        newWidth = Math.max(minSize, resizeStartWidth + dx);
+                        newHeight = Math.max(minSize, resizeStartHeight + dy);
+                    }
+
+                    // Apply new dimensions to the element being resized
+                    elementBeingResized.width = newWidth;
+                    // For LED, keep it square
+                    if (elementBeingResized.type === 'LED') {
+                        elementBeingResized.height = newWidth; // Keep height equal to width
+                    } else {
+                        elementBeingResized.height = newHeight;
+                    }
+
+                    // Recalculate pin positions based on new dimensions (they are already relative, just ensure consistency)
+                    if (elementBeingResized.type !== 'LED' && elementBeingResized.type !== 'Battery') {
+                        elementBeingResized.input1Pin = { x: elementBeingResized.width * 0.25, y: 0 };
+                        if (elementBeingResized.type !== 'NOT' && elementBeingResized.type !== 'BUFFER') {
+                            elementBeingResized.input2Pin = { x: elementBeingResized.width * 0.75, y: 0 };
+                        } else {
+                            elementBeingResized.input1Pin = { x: elementBeingResized.width / 2, y: 0 }; // For NOT/BUFFER
+                        }
+                        elementBeingResized.outputPin = { x: elementBeingResized.width / 2, y: elementBeingResized.height };
+                    } else if (elementBeingResized.type === 'LED') {
+                        elementBeingResized.inputPin = { x: elementBeingResized.width / 2, y: 0 };
+                    } else if (elementBeingResized.type === 'Battery') {
+                        elementBeingResized.outputPin = { x: elementBeingResized.width / 2, y: elementBeingResized.height };
+                    }
+
+                    updateCanvas();
+                    return; // Crucial: stop other mousemove logic
+                }
+
+
+                if (isDrawingGate) {
+                    let currentWidth = mx - startX;
+                    let currentHeight = my - startY;
+
+                    if (currentWidth < 20) currentWidth = 20;
+                    if (currentHeight < 20) currentHeight = 20;
+
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    wires.forEach(wire => wire.draw());
+                    elements.forEach(element => element.draw());
+
+                    ctx.beginPath();
+                    ctx.strokeStyle = '#007BFF';
+                    ctx.lineWidth = 2;
+                    ctx.rect(startX, startY, currentWidth, currentHeight);
+                    ctx.stroke();
+                    ctx.fillStyle = 'rgba(0, 123, 255, 0.2)';
+                    ctx.fill();
+                    ctx.fillStyle = '#000000';
+                    ctx.font = '14px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText(currentDrawingGateType, startX + currentWidth / 2, startY + currentHeight / 2);
+                    return;
+                }
+
+                if (isDraggingElement && selectedElements.length > 0) {
+                    // Apply movement to all selected elements
+                    selectedElements.forEach(element => {
+                        element.x = mx - offsetX;
+                        element.y = my - offsetY;
+                    });
+                    updateCanvas();
+                } else if (isSelectingRectangle) {
+                    updateCanvas(); // Just redraw to show the updated rectangle
+                }
+            } catch (e) {
+                console.error('Error in mousemove event:', e);
+            }
+        });
+
+        // Mouse Up Event
+        canvas.addEventListener('mouseup', (e) => {
+            try {
+                const rect = canvas.getBoundingClientRect();
+                const mx = (e.clientX - rect.left) / zoomScale;
+                const my = (e.clientY - rect.top) / zoomScale;
+
+                if (isResizingElement) {
+                    isResizingElement = false;
+                    resizeHandleType = null;
+                    elementBeingResized = null;
+                    updateCircuit(); // Recalculate connections after resize if needed
+                    updateCanvas();
+                    updateInfoPanel();
+                    return;
+                }
+
+                if (isDrawingGate) {
+                    let finalWidth = mx - startX;
+                    let finalHeight = my - startY;
+
+                    if (finalWidth < 40) finalWidth = 40;
+                    if (finalHeight < 40) finalHeight = 40;
+
+                    if (currentDrawingGateType === 'LED') {
+                        let led = new LED(startX, startY);
+                        led.width = finalWidth;
+                        led.height = finalWidth; // Ensure LED is square
+                        elements.push(led);
+                    } else if (currentDrawingGateType === 'Battery') {
+                        let battery = new Battery(startX, startY);
+                        battery.width = finalWidth;
+                        battery.height = finalHeight;
+                        elements.push(battery);
+                    } else {
+                        let newGate = new Element(currentDrawingGateType, startX, startY, finalWidth, finalHeight);
+                        elements.push(newGate);
+                    }
+
+                    isDrawingGate = false;
+                    currentDrawingGateType = 'none';
+                    drawGateTypeSelect.value = 'none';
+                    updateCircuit();
+                    updateCanvas();
+                    updateInfoPanel(); // Update panel after adding gate
+                    return;
+                }
+
+                if (isSelectingRectangle) {
+                    isSelectingRectangle = false;
+                    const x = Math.min(startX, mx);
+                    const y = Math.min(startY, my);
+                    const width = Math.abs(mx - startX);
+                    const height = Math.abs(my - startY);
+
+                    const newlySelected = elements.filter(element =>
+                        element.intersects(x, y, width, height)
+                    );
+
+                    if (e.shiftKey) {
+                        newlySelected.forEach(el => {
+                            if (!selectedElements.includes(el)) {
+                                selectedElements.push(el);
+                            }
+                        });
+                    } else {
+                        selectedElements = newlySelected;
+                    }
+                    updateInfoPanel();
+                    updateCanvas();
+                    return;
+                }
+
+                isDraggingElement = false;
+            } catch (e) {
+                console.error('Error in mouseup event:', e);
+            }
+        });
+
+        // Event listener for the gate type selection dropdown
+        drawGateTypeSelect.addEventListener('change', (e) => {
+            currentDrawingGateType = e.target.value;
+            if (currentDrawingGateType !== 'none') {
+                document.getElementById('selected-info').innerText = `Ready to draw ${currentDrawingGateType} gate. Click and drag on canvas.`;
+            } else {
+                document.getElementById('selected-info').innerText = 'None selected';
+            }
+            // Exit other modes
+            isWiring = false;
+            wireSource = null;
+            isDraggingElement = false;
+            isSelectingRectangle = false;
+            isResizingElement = false; // Reset resize mode
+            selectedElements = [];
+            updateCanvas();
+            updateInfoPanel(); // Clear additional info when changing draw type
+        });
+
+        // --- New Functions for Truth Table and Equation ---
+
+        function getEquation(gateType) {
+            switch (gateType) {
+                case 'AND': return 'A ⋅ B (or A & B)';
+                case 'OR': return 'A + B (or A | B)';
+                case 'NOT': return '¬A (or !A)';
+                case 'NAND': return '¬(A ⋅ B)';
+                case 'NOR': return '¬(A + B)';
+                case 'XOR': return 'A ⊕ B';
+                case 'XNOR': return '¬(A ⊕ B)';
+                case 'BUFFER': return 'A';
+                default: return 'N/A';
+            }
+        }
+
+        function generateTruthTable(gateType) {
+            let tableHtml = '';
+            let inputs = [];
+
+            // Create a dummy gate to simulate its output without affecting canvas elements
+            // Use current element's class if possible, or Element for generic gates
+            let tempGate;
+            if (['AND', 'OR', 'NOT', 'NAND', 'NOR', 'XOR', 'XNOR', 'BUFFER'].includes(gateType)) {
+                 tempGate = new Element(gateType, 0, 0, 0, 0); // Dummy element
+            } else {
+                return '<p>Truth table not applicable for this element type.</p>';
+            }
+
+
+            switch (gateType) {
+                case 'AND':
+                case 'OR':
+                case 'NAND':
+                case 'NOR':
+                case 'XOR':
+                case 'XNOR':
+                    tableHtml += '<tr><th>A</th><th>B</th><th>Output</th></tr>';
+                    inputs = [[false, false], [false, true], [true, false], [true, true]];
+                    break;
+                case 'NOT':
+                case 'BUFFER':
+                    tableHtml += '<tr><th>A</th><th>Output</th></tr>';
+                    inputs = [[false], [true]];
+                    break;
+                default:
+                    // Should not reach here if gateType check is done above
+                    return '<p>Truth table not applicable for this element type.</p>';
+            }
+
+            inputs.forEach(inputValues => {
+                tableHtml += '<tr>';
+                inputValues.forEach(val => {
+                    tableHtml += `<td>${val ? '1' : '0'}</td>`;
+                });
+
+                if (inputValues.length === 1) {
+                    tempGate.input1 = inputValues[0];
+                } else if (inputValues.length === 2) {
+                    tempGate.input1 = inputValues[0];
+                    tempGate.input2 = inputValues[1];
+                }
+                tempGate.computeOutput();
+                tableHtml += `<td>${tempGate.output ? '1' : '0'}</td>`;
+                tableHtml += '</tr>';
+            });
+
+            return '<table border="1">' + tableHtml + '</table>';
+        }
+
+        // --- End New Functions ---
+
+        function updateInfoPanel() {
+            const selectedInfoParagraph = document.getElementById('selected-info');
+            const input1Select = document.getElementById('input1');
+            const input2Select = document.getElementById('input2');
+            const gateDetailsPanel = document.getElementById('gate-details-panel');
+
+            // Clear previous content in the details panel
+            gateDetailsPanel.innerHTML = '';
+
+            if (selectedElements.length === 1) {
+                const selectedElement = selectedElements[0];
+                selectedInfoParagraph.innerText = `Selected: ${selectedElement.type} (ID: ${selectedElement.id})`;
+
+                // Display equation and truth table for logic gates
+                if (['AND', 'OR', 'NOT', 'NAND', 'NOR', 'XOR', 'XNOR', 'BUFFER'].includes(selectedElement.type)) {
+                    const equation = getEquation(selectedElement.type);
+                    const truthTableHtml = generateTruthTable(selectedElement.type);
+                    gateDetailsPanel.innerHTML = `
+                        <h4>Equation:</h4>
+                        <p>${equation}</p>
+                        <h4>Truth Table:</h4>
+                        ${truthTableHtml}
+                    `;
+                } else if (selectedElement.type === 'Battery') {
+                    gateDetailsPanel.innerHTML = `
+                        <h4>Status:</h4>
+                        <p>Output: ${selectedElement.output ? 'ON (1)' : 'OFF (0)'}</p>
+                        <p>Click "Toggle Battery" to change state.</p>
+                    `;
+                } else if (selectedElement.type === 'LED') {
+                    gateDetailsPanel.innerHTML = `
+                        <h4>Status:</h4>
+                        <p>Input: ${selectedElement.input === true ? 'ON (1)' : selectedElement.input === false ? 'OFF (0)' : 'N/A'}</p>
+                        <p>Output: ${selectedElement.output ? 'ON (1)' : 'OFF (0)'}</p>
+                    `;
+                }
+                else{
+                    gateDetailsPanel.innerHTML = "Select an logic gate to see the Truth table and equation";
+                }
+
+                // Update input dropdowns
+                if (selectedElement.type === 'LED') {
+                    input1Select.value = selectedElement.input === true ? 'true' : selectedElement.input === false ? 'false' : 'none';
+                } else {
+                    input1Select.value = selectedElement.input1 === true ? 'true' : selectedElement.input1 === false ? 'false' : 'none';
+                    input2Select.value = selectedElement.input2 === true ? 'true' : selectedElement.input2 === false ? 'false' : 'none';
+                }
+
+                input1Select.disabled = wires.some(w => w.target === selectedElement && (w.inputSlot === 'input1' || w.inputSlot === 'input')) || selectedElement.type === 'Battery';
+                input2Select.disabled = wires.some(w => w.target === selectedElement && w.inputSlot === 'input2') || selectedElement.type === 'NOT' || selectedElement.type === 'LED' || selectedElement.type === 'Battery' || selectedElement.type === 'BUFFER';
+
+            } else {
+                selectedInfoParagraph.innerText = `Selected: ${selectedElements.length} elements`;
+                input1Select.value = 'none';
+                input2Select.value = 'none';
+                input1Select.disabled = true;
+                input2Select.disabled = true;
+            }
+        }
+        function toggleSelectedBattery() {
+            if (selectedElements.length === 1 && selectedElements[0].type === 'Battery') {
+                const battery = selectedElements[0];
+                battery.powered = !battery.powered;
+                battery.computeOutput();
+                updateCircuit();
+                updateCanvas();
+                updateInfoPanel(); // Update info panel after toggling battery
+                document.getElementById('selected-info').innerText =
+                    `Battery ${battery.id} is now ${battery.powered ? 'ON' : 'OFF'}`;
+            } else {
+                alert('Please select a single Battery to toggle.');
+            }
+        }
+
+        canvas.addEventListener('wheel', function(e) {
+            if (e.ctrlKey) {
+                e.preventDefault();
+                if (e.deltaY < 0) {
+                    zoomIn();
+                } else {
+                    zoomOut();
+                }
+            }
+        });
+        function zoomIn() {
+            zoomScale *= 1.1; // Zoom in by 10%
+            updateCanvas();
+        }
+
+        function zoomOut() {
+            zoomScale /= 1.1; // Zoom out by...
+            updateCanvas();
+        }
+
+        function deleteSelectedElements() {
+            if (selectedElements.length === 0) {
+                alert("No elements selected to delete.");
+                return;
+            }
+
+            wires = wires.filter(wire =>
+                !selectedElements.includes(wire.source) && !selectedElements.includes(wire.target)
+            );
+
+            elements = elements.filter(element => !selectedElements.includes(element));
+
+            selectedElements = [];
+            updateInfoPanel();
+            updateCircuit();
+            updateCanvas();
+            document.getElementById('selected-info').innerText = 'Selected elements deleted.';
+        }
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Delete' || e.key === 'Backspace') {
+                if (selectedElements.length > 0) {
+                    e.preventDefault();
+                    deleteSelectedElements();
+                }
+            }
+        });
+
+
+        // Initialize canvas
+        updateCanvas();
+        updateInfoPanel(); // Initial call to set up the panel
+    </script>
+</body>
+</html>
